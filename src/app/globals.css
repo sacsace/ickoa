@@ -1,0 +1,317 @@
+@import "tailwindcss";
+
+:root {
+  /*
+   * ICKOA — unified slate navy
+   * One hue family for brand, accents, and surfaces.
+   */
+  --background: #f4f5f7;
+  --foreground: #1c2430;
+  --card: #ffffff;
+  --card-foreground: #1c2430;
+  --muted: #ebeef2;
+  --muted-foreground: #667085;
+  --accent: #eef2f6;
+  --accent-foreground: #1c2430;
+  --border: #e2e6ec;
+
+  --ickoa-ink: #1b2f44;
+  --ickoa-navy: #2a4560;
+  --ickoa-navy-soft: #4a6b8a;
+  --ickoa-mist: #e8eef4;
+  --ickoa-mist-deep: #d5dee8;
+
+  --brand: var(--ickoa-navy);
+  --brand-dark: var(--ickoa-ink);
+  --brand-light: var(--ickoa-navy-soft);
+  --secondary: var(--ickoa-mist);
+  --secondary-foreground: var(--ickoa-ink);
+
+  --community-green: var(--ickoa-navy);
+  --community-green-dark: var(--ickoa-ink);
+  --chennai-warm: var(--ickoa-navy-soft);
+  --chennai-teal: var(--ickoa-navy);
+
+  /* legacy aliases → new palette */
+  --ickoa-green: var(--ickoa-navy);
+  --ickoa-green-dark: var(--ickoa-ink);
+  --ickoa-green-soft: var(--ickoa-navy-soft);
+  --ickoa-yellow: var(--ickoa-mist-deep);
+  --ickoa-yellow-dark: var(--ickoa-navy-soft);
+  --ickoa-yellow-soft: var(--ickoa-mist);
+}
+
+.dark {
+  --background: #12161c;
+  --foreground: #eef1f5;
+  --card: #1a2028;
+  --card-foreground: #eef1f5;
+  --muted: #242b35;
+  --muted-foreground: #9aa3b0;
+  --accent: #2a3340;
+  --accent-foreground: #eef1f5;
+  --border: #303848;
+
+  --brand: #7a9bb8;
+  --brand-dark: #5a7f9e;
+  --brand-light: #9bb4c9;
+  --secondary: #2a3340;
+  --secondary-foreground: #eef1f5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-brand: var(--brand);
+  --color-brand-dark: var(--brand-dark);
+  --color-brand-light: var(--brand-light);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-community-green: var(--community-green);
+  --color-chennai-teal: var(--chennai-teal);
+  --font-sans: var(--font-noto-sans-kr);
+  --font-display: var(--font-noto-sans-kr);
+  --font-mono: var(--font-noto-sans-kr);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::selection {
+  background: rgb(42 69 96 / 0.18);
+  color: #1c2430;
+}
+
+.font-display {
+  font-family: var(--font-sans), "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  letter-spacing: -0.02em;
+}
+
+/* Portal content box */
+.portal-box {
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.portal-box-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+}
+
+.portal-box-title h2,
+.portal-box-title h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+}
+
+.portal-more {
+  font-size: 12px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.portal-more:hover {
+  color: var(--brand);
+}
+
+.portal-list-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.7rem 1rem;
+  transition: background-color 0.12s ease;
+}
+.portal-list-item:last-child {
+  border-bottom: 0;
+}
+.portal-list-item:hover {
+  background: var(--muted);
+}
+
+.community-card,
+.hub-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+
+.tag-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 2px;
+  padding: 0.15rem 0.4rem;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tag-pill-green,
+.tag-pill-saffron,
+.tag-pill-teal,
+.tag-pill-warm {
+  background: rgb(42 69 96 / 0.1);
+  color: var(--brand-dark);
+}
+
+.tag-pill-glass {
+  background: rgb(255 255 255 / 0.18);
+  color: white;
+  border: 1px solid rgb(255 255 255 / 0.22);
+}
+
+.section-alt {
+  background: var(--muted);
+}
+
+.section-green {
+  background: rgb(42 69 96 / 0.05);
+}
+
+.section-warm {
+  background: var(--ickoa-mist);
+}
+
+.accent-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--brand);
+}
+
+/* Solid portal header */
+.site-header-bar,
+.site-header-bar-hero,
+.site-header-bar-solid {
+  background: #ffffff;
+  border-bottom: 1px solid var(--border);
+  color: var(--foreground);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+.site-header-panel {
+  background: #ffffff;
+  border-color: var(--border);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.06);
+}
+
+.site-nav-link {
+  padding: 0.55rem 0.85rem;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  color: #333947;
+  transition: color 0.12s ease;
+}
+.site-nav-link:hover,
+.site-nav-link.is-active {
+  color: var(--brand);
+}
+
+.site-nav-link.is-active {
+  box-shadow: inset 0 -3px 0 var(--brand);
+}
+
+.glass-bar {
+  background: rgb(0 0 0 / 0.35);
+  border: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.hover-lift {
+  transition: border-color 0.15s ease;
+}
+.hover-lift:hover {
+  border-color: var(--brand);
+}
+
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.snap-start {
+  scroll-snap-align: start;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 36s linear infinite;
+}
+.marquee-track:hover {
+  animation-play-state: paused;
+}
+
+.board-row {
+  display: grid;
+  gap: 0.75rem;
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+}
+.board-row:hover {
+  background: var(--muted);
+}
+
+.site-rule {
+  height: 1px;
+  background: var(--border);
+}
+
+/* Shortcut icons */
+.portal-shortcut {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.15rem;
+  text-align: center;
+  transition: color 0.12s ease;
+}
+.portal-shortcut:hover {
+  color: var(--brand);
+}
+.portal-shortcut-icon {
+  display: flex;
+  height: 40px;
+  width: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  background: rgb(42 69 96 / 0.08);
+  color: var(--brand);
+  font-size: 13px;
+  font-weight: 700;
+}
+.portal-shortcut:hover .portal-shortcut-icon {
+  background: rgb(42 69 96 / 0.16);
+  color: var(--brand-dark);
+}

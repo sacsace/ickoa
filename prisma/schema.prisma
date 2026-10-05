@@ -1,0 +1,438 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MEMBER
+  SUPER_ADMIN
+  CONTENT_ADMIN
+  COMMUNITY_ADMIN
+  EVENT_ADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  loginId       String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  password      String?
+  image         String?
+  phone         String?
+  address       String?
+  nameEn        String?
+  company       String?
+  jobTitle      String?
+  role          Role      @default(MEMBER)
+  accounts      Account[]
+  sessions      Session[]
+  posts         Post[]
+  comments      Comment[]
+  likes         Like[]
+  reports       Report[]
+  notifications Notification[]
+  eventRegs     EventRegistration[]
+  clubMembers   ClubMember[]
+  donations     Donation[]
+  createdEvents Event[]
+  createdGuides Guide[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model News {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  category  String
+  region    String
+  image     String?
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Business {
+  id        String  @id @default(cuid())
+  name      String
+  category  String
+  region    String
+  address   String
+  phone     String?
+  website   String?
+  lat       Float?
+  lng       Float?
+  description String?
+  ownerId   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Board {
+  id    String @id @default(cuid())
+  slug  String @unique
+  name  String
+  icon  String?
+  order Int    @default(0)
+  posts Post[]
+}
+
+model Post {
+  id          String       @id @default(cuid())
+  boardId     String
+  authorId    String
+  title       String
+  content     String
+  viewCount   Int          @default(0)
+  board       Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  author      User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  comments    Comment[]
+  likes       Like[]
+  attachments Attachment[]
+  reports     Report[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  postId    String
+  authorId  String
+  content   String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Like {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([postId, userId])
+}
+
+model Attachment {
+  id        String   @id @default(cuid())
+  postId    String
+  url       String
+  filename  String
+  mimeType  String?
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id            String              @id @default(cuid())
+  title         String
+  description   String
+  date          DateTime
+  location      String
+  image         String?
+  maxAttendees  Int
+  createdById   String?
+  createdBy     User?               @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  registrations EventRegistration[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model EventRegistration {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  qrCode    String   @unique
+  checkedIn Boolean  @default(false)
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+}
+
+model Club {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  description String?
+  icon        String?
+  order       Int          @default(0)
+  members     ClubMember[]
+  createdAt   DateTime     @default(now())
+}
+
+model ClubMember {
+  id        String   @id @default(cuid())
+  clubId    String
+  userId    String
+  role      String   @default("member")
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt  DateTime @default(now())
+
+  @@unique([clubId, userId])
+}
+
+model GuideCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  nameEn    String?
+  slug      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model GalleryCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  nameEn    String?
+  slug      String   @unique
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Guide {
+  id          String   @id @default(cuid())
+  category    String
+  region      String
+  title       String
+  content     String
+  order       Int      @default(0)
+  createdById String?
+  createdBy   User?    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Banner {
+  id        String   @id @default(cuid())
+  title     String
+  image     String
+  link      String?
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Popup {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  image     String?
+  active    Boolean  @default(false)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime @default(now())
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  postId     String
+  reporterId String
+  reason     String
+  resolved   Boolean  @default(false)
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reporter   User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  link      String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model DashboardItem {
+  id        String   @id @default(cuid())
+  type      String   @unique
+  value     String
+  label     String
+  change    String?
+  updatedAt DateTime @updatedAt
+}
+
+model MagazineIssue {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  volume      Int      @unique
+  title       String   @default("다이나믹 코리안")
+  subtitle    String   @default("재인도 첸나이 한인회보")
+  publishedAt String
+  coverImage  String
+  pdfUrl      String
+  editorNote  String?
+  published   Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model HeroSlide {
+  id        String   @id @default(cuid())
+  mediaType String   @default("IMAGE")
+  mediaUrl  String
+  caption   String?
+  captionEn String?
+  link      String?
+  active    Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Donation {
+  id                String   @id @default(cuid())
+  amount            Int
+  currency          String   @default("INR")
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?  @unique
+  status            String   @default("pending")
+  donorName         String?
+  donorEmail        String?
+  donorPhone        String?
+  message           String?
+  userId            String?
+  user              User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model GalleryAlbum {
+  id            String         @id @default(cuid())
+  slug          String         @unique
+  title         String
+  titleEn       String
+  description   String         @default("")
+  descriptionEn String         @default("")
+  cover         String
+  category      String         @default("ickoa")
+  order         Int            @default(0)
+  published     Boolean        @default(true)
+  photos        GalleryPhoto[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model GalleryPhoto {
+  id        String       @id @default(cuid())
+  albumId   String
+  album     GalleryAlbum @relation(fields: [albumId], references: [id], onDelete: Cascade)
+  src       String
+  caption   String       @default("")
+  captionEn String       @default("")
+  date      String?
+  order     Int          @default(0)
+  createdAt DateTime     @default(now())
+}
+
+model PageView {
+  id        String   @id @default(cuid())
+  visitorId String
+  path      String
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([path])
+  @@index([visitorId])
+}
+
+/// 한인회 소개 문서 (정관 등 — 여러 건 등록 가능)
+model AboutDocument {
+  id        String   @id @default(cuid())
+  kind      String   @default("bylaws")
+  title     String
+  content   String
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([kind])
+}
+
+/// 한인회 연혁 항목
+model HistoryEntry {
+  id          String   @id @default(cuid())
+  year        String
+  title       String
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// 활동 보고서
+model ActivityReport {
+  id        String   @id @default(cuid())
+  year      Int?
+  title     String
+  content   String
+  fileUrl   String?
+  published Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// 회장단 / 임원
+model LeadershipMember {
+  id        String   @id @default(cuid())
+  name      String
+  nameEn    String?
+  role      String
+  bio       String?
+  image     String?
+  order     Int      @default(0)
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
