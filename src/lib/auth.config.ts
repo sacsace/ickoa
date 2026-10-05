@@ -192,7 +192,8 @@ export const authConfig = {
         session.user.image =
           (token.picture as string | null | undefined) ?? session.user.image;
         session.user.role = (token.role as string) ?? "MEMBER";
-        session.sessionKind = token.sessionKind ?? "site";
+        session.sessionKind =
+          (token.sessionKind as "site" | "admin" | undefined) ?? "site";
       }
       return session;
     },
