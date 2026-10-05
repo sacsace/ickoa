@@ -26,7 +26,6 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
     year: initial?.year ?? "",
     title: initial?.title ?? "",
     description: initial?.description ?? "",
-    order: String(initial?.order ?? 0),
   });
 
   function handleSubmit(e: React.FormEvent) {
@@ -36,7 +35,6 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
       year: form.year,
       title: form.title,
       description: form.description,
-      order: Number(form.order) || 0,
     };
     startTransition(async () => {
       try {
@@ -58,26 +56,15 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
       <AdminPageHeader title={initial ? "연혁 수정" : "연혁 등록"} />
       <AdminBackLink href="/admin/about/history" />
       <form onSubmit={handleSubmit} className="space-y-4 border border-border p-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">연도 *</label>
-            <input
-              value={form.year}
-              onChange={(e) => setForm({ ...form, year: e.target.value })}
-              className="h-11 w-full border border-border bg-background px-4 text-sm"
-              placeholder="1985"
-              required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">표시 순서</label>
-            <input
-              type="number"
-              value={form.order}
-              onChange={(e) => setForm({ ...form, order: e.target.value })}
-              className="h-11 w-full border border-border bg-background px-4 text-sm"
-            />
-          </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">연도 *</label>
+          <input
+            value={form.year}
+            onChange={(e) => setForm({ ...form, year: e.target.value })}
+            className="h-11 w-full border border-border bg-background px-4 text-sm"
+            placeholder="2000-2002년"
+            required
+          />
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">제목 *</label>

@@ -83,19 +83,21 @@ export async function createHistoryEntry(data: {
   year: string;
   title: string;
   description?: string;
-  order?: number;
 }) {
   await requireContentAdmin();
   const year = data.year.trim();
   const title = data.title.trim();
   if (!year || !title) throw new Error("연도와 제목을 입력해 주세요.");
 
+  const maxOrder = await prisma.historyEntry.aggregate({ _max: { order: true } });
+  const order = (maxOrder._max.order ?? 0) + 1;
+
   const entry = await prisma.historyEntry.create({
     data: {
       year,
       title,
       description: data.description?.trim() || null,
-      order: data.order ?? 0,
+      order,
     },
   });
   revalidateAbout("/about/history", "/admin/about/history");
@@ -104,7 +106,7 @@ export async function createHistoryEntry(data: {
 
 export async function updateHistoryEntry(
   id: string,
-  data: { year: string; title: string; description?: string; order?: number },
+  data: { year: string; title: string; description?: string },
 ) {
   await requireContentAdmin();
   const year = data.year.trim();
@@ -117,7 +119,6 @@ export async function updateHistoryEntry(
       year,
       title,
       description: data.description?.trim() || null,
-      order: data.order ?? 0,
     },
   });
   revalidateAbout("/about/history", "/admin/about/history", `/admin/about/history/${id}`);
@@ -127,6 +128,18 @@ export async function updateHistoryEntry(
 export async function deleteHistoryEntry(id: string) {
   await requireContentAdmin();
   await prisma.historyEntry.delete({ where: { id } });
+  const remaining = await prisma.historyEntry.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    select: { id: true },
+  });
+  await prisma.$transaction(
+    remaining.map((entry, index) =>
+      prisma.historyEntry.update({
+        where: { id: entry.id },
+        data: { order: index + 1 },
+      }),
+    ),
+  );
   revalidateAbout("/about/history", "/admin/about/history");
   return { ok: true as const };
 }

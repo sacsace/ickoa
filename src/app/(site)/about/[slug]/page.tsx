@@ -90,24 +90,47 @@ export default async function AboutSubPage({
     return (
       <>
         <PageHeader title="연혁" backHref="/about" />
-        <div className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+        <div className="mx-auto w-full max-w-[1356px] px-4 py-8 md:px-6 md:py-10">
           {entries.length === 0 ? (
             <p className="text-muted-foreground">등록된 연혁이 없습니다.</p>
           ) : (
-            <ol className="divide-y divide-border border border-border">
-              {entries.map((entry) => (
-                <li key={entry.id} className="flex gap-4 px-4 py-4">
-                  <span className="w-16 shrink-0 text-sm font-bold text-brand">{entry.year}</span>
-                  <div className="min-w-0">
-                    <p className="font-medium">{entry.title}</p>
-                    {entry.description ? (
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                        {entry.description}
+            <ol className="relative">
+              {entries.map((entry, index) => {
+                const isLast = index === entries.length - 1;
+                return (
+                  <li
+                    key={entry.id}
+                    className="relative grid gap-3 pb-8 last:pb-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8 md:pb-10"
+                  >
+                    <div className="md:pt-1 md:text-right">
+                      <p className="whitespace-pre-line text-sm font-bold leading-snug text-brand md:text-[15px]">
+                        {entry.year}
                       </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
+                    </div>
+
+                    <div className="relative pl-7 md:pl-10">
+                      <span
+                        className="absolute left-0 top-2 z-10 h-3 w-3 rounded-full border-2 border-brand bg-background md:left-3"
+                        aria-hidden
+                      />
+                      {!isLast ? (
+                        <span
+                          className="absolute left-[5px] top-5 bottom-[-32px] w-px bg-border md:left-[17px] md:bottom-[-40px]"
+                          aria-hidden
+                        />
+                      ) : null}
+                      <div className="border border-border bg-card px-5 py-5 md:px-7 md:py-6">
+                        <p className="text-base font-semibold leading-snug">{entry.title}</p>
+                        {entry.description ? (
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+                            {entry.description}
+                          </p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ol>
           )}
         </div>
