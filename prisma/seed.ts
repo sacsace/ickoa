@@ -17,13 +17,13 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { loginId: "root" },
     update: {
-      name: "ICKOA Root Admin",
+      name: "KAIC Root Admin",
       password: adminPassword,
       role: Role.SUPER_ADMIN,
     },
     create: {
       loginId: "root",
-      name: "ICKOA Root Admin",
+      name: "KAIC Root Admin",
       password: adminPassword,
       role: Role.SUPER_ADMIN,
     },
@@ -81,7 +81,7 @@ async function main() {
   }
 
   const galleryCategories = [
-    { name: "ICKOA", nameEn: "ICKOA", slug: "ickoa", order: 1 },
+    { name: "KAIC", nameEn: "KAIC", slug: "ickoa", order: 1 },
     { name: "첸나이 라이프", nameEn: "Chennai Life", slug: "life", order: 2 },
     { name: "동호회", nameEn: "Clubs", slug: "clubs", order: 3 },
     { name: "한국", nameEn: "Korea", slug: "korea", order: 4 },
@@ -264,7 +264,7 @@ async function main() {
         data: {
           boardId: freeBoard.id,
           authorId: admin.id,
-          title: "ICKOA 커뮤니티 플랫폼 오픈!",
+          title: "KAIC 커뮤니티 플랫폼 오픈!",
           content: "재인도 첸나이 한인회 새 웹사이트가 오픈했습니다. 많은 이용 부탁드립니다.",
         },
       });

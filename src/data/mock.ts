@@ -253,4 +253,5 @@ export const aboutLinks = [
   { id: "reports", href: "/about/reports" },
   { id: "finance", href: "/about/finance" },
   { id: "sponsors", href: "/about/sponsors" },
+  { id: "ci", href: "/about/ci" },
 ];

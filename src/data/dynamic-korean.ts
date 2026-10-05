@@ -76,7 +76,7 @@ export const dynamicKoreanVol16: MagazineIssue = {
           excerpt:
             "제11대 첸나이 한인회장 조상현 — 코로나 이후 늦어진 활동을 돌아보며, 교민 여러분께 감사를 전하고 새 출발을 다짐합니다.",
           excerptEn:
-            "President Jo Sang-hyun reflects on post-pandemic delays and pledges a quiet, steady restart for the 11th ICKOA leadership.",
+            "President Jo Sang-hyun reflects on post-pandemic delays and pledges a quiet, steady restart for the 11th KAIC leadership.",
         },
         {
           id: "consul-greeting",
@@ -87,7 +87,7 @@ export const dynamicKoreanVol16: MagazineIssue = {
           excerpt:
             "첸나이 한인 동포사회는 이곳에서 가장 큰 외국인 공동체. 총영사관은 한인회와 함께 동포 사회 발전을 위해 노력하겠습니다.",
           excerptEn:
-            "Chennai's Korean community is the largest foreign community here. The Consulate General will work with ICKOA for its growth.",
+            "Chennai's Korean community is the largest foreign community here. The Consulate General will work with KAIC for its growth.",
         },
         {
           id: "ambassador-visit",
@@ -99,7 +99,7 @@ export const dynamicKoreanVol16: MagazineIssue = {
           excerpt:
             "2023년 2월, 주인도대사가 타밀나두 주총리 면담, 마드라스대학 방문, 첸나이 소재 기업·한인회 대표 간담회를 진행했습니다.",
           excerptEn:
-            "In Feb 2023, the Ambassador met Tamil Nadu's CM, visited Madras University, and held a luncheon with Korean businesses and ICKOA.",
+            "In Feb 2023, the Ambassador met Tamil Nadu's CM, visited Madras University, and held a luncheon with Korean businesses and KAIC.",
         },
         {
           id: "kaco-donation",
@@ -108,7 +108,7 @@ export const dynamicKoreanVol16: MagazineIssue = {
           category: "association",
           page: 18,
           excerpt: "한인회와 KACO가 함께하는 지역 사회 기부 활동.",
-          excerptEn: "ICKOA and KACO community donation initiative.",
+          excerptEn: "KAIC and KACO community donation initiative.",
         },
         {
           id: "federation",
@@ -170,13 +170,13 @@ export const dynamicKoreanVol16: MagazineIssue = {
         {
           id: "org-chart",
           title: "첸나이 한인회 조직도",
-          titleEn: "ICKOA Organization Chart",
+          titleEn: "KAIC Organization Chart",
           category: "association",
           page: 59,
           excerpt:
             "제11대 재인도 첸나이 한인회 — 조상현 회장, 부회장단, 각 국장 및 임원진. 서포터즈·학생회 모집 중.",
           excerptEn:
-            "11th ICKOA leadership under President Jo Sang-hyun. Supporters and student council recruitment open.",
+            "11th KAIC leadership under President Jo Sang-hyun. Supporters and student council recruitment open.",
         },
         {
           id: "interview",

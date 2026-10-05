@@ -69,7 +69,7 @@ export function Footer() {
             <p className="mb-3 text-[13px] font-bold">{t.footer.contact}</p>
             <ul className="space-y-2 text-[13px] text-muted-foreground">
               <li>Chennai, Tamil Nadu, India</li>
-              <li>info@ickoa.org</li>
+              <li>edit@ickoa.org</li>
             </ul>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function Footer() {
           <div className="space-y-1">
             <p>{t.footer.rights}</p>
             <p>
-              Made by{" "}
+              Developed by{" "}
               <a
                 href="https://www.msventures.in"
                 target="_blank"

@@ -42,7 +42,7 @@ export default function AdminLoginForm() {
   return (
     <div className="border border-border bg-card p-6">
       <h1 className="text-lg font-semibold">관리자 로그인</h1>
-      <p className="mt-1 text-sm text-muted-foreground">ICKOA 사이트 관리</p>
+      <p className="mt-1 text-sm text-muted-foreground">KAIC 사이트 관리</p>
 
       <form onSubmit={handleLogin} className="mt-6 space-y-4">
         <div>

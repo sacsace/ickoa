@@ -74,7 +74,7 @@ export function DynamicKoreanSection({ issue }: Props) {
             </div>
             <div className="p-6">
               <p className="text-xs font-medium text-brand">
-                {isKo ? "발행인 조상현 · 편집부" : "Publisher · ICKOA Editorial"}
+                {isKo ? "발행인 조상현 · 편집부" : "Publisher · KAIC Editorial"}
               </p>
               {issue.editorNote && (
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">

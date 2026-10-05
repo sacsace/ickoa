@@ -60,7 +60,7 @@ function HeroSlideMedia({
   return (
     <Image
       src={slide.mediaUrl}
-      alt={slide.caption ?? "ICKOA hero"}
+      alt={slide.caption ?? "KAIC hero"}
       fill
       priority={priority}
       className={fitClass}

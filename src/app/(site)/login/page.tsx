@@ -4,7 +4,7 @@ import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
   title: "로그인",
-  description: "ICKOA 커뮤니티 회원 로그인",
+  description: "KAIC 커뮤니티 회원 로그인",
   path: "/login",
   noIndex: true,
 });

@@ -19,7 +19,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: report.title,
-    description: `${report.title} — 재인도 첸나이 한인회(ICKOA)`,
+    description: `${report.title} — 재인도 첸나이 한인회(KAIC)`,
     path: `/about/reports/${id}`,
   });
 }

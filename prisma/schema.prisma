@@ -431,6 +431,9 @@ model LeadershipMember {
   role      String
   bio       String?
   image     String?
+  /// 조직도 단계 (1=최상위, 숫자가 클수록 하위)
+  level     Int      @default(1)
+  /// 같은 단계 안에서의 좌우 순서
   order     Int      @default(0)
   published Boolean  @default(true)
   createdAt DateTime @default(now())

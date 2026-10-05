@@ -65,7 +65,7 @@ export default function LoginForm() {
     <>
       <PageHeader
         title="로그인"
-        subtitle="ICKOA 커뮤니티에 오신 것을 환영합니다"
+        subtitle="KAIC 커뮤니티에 오신 것을 환영합니다"
       />
       <div className="mx-auto max-w-md px-4 py-12">
         <form onSubmit={handleLogin} className="space-y-4">

@@ -5,7 +5,7 @@ import { mainNavigation } from "@/data/navigation";
 
 export const dynamic = "force-dynamic";
 
-const ABOUT_SLUGS = ["history", "leadership", "bylaws", "reports", "finance", "sponsors"];
+const ABOUT_SLUGS = ["history", "leadership", "bylaws", "reports", "finance", "sponsors", "ci"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

@@ -1,16 +1,17 @@
 import type { Metadata } from "next";
 
-export const SITE_NAME = "ICKOA";
+export const SITE_NAME = "KAIC";
 export const SITE_TAGLINE = "재인도 첸나이 한인회";
 export const SITE_TAGLINE_EN = "Korean Association in Chennai";
 
 export const DEFAULT_DESCRIPTION =
-  "남인도 첸나이 한인회(ICKOA) 공식 커뮤니티. 행사, 한인회보, 갤러리, 뉴스, 생활 가이드, 동호회, 기업 정보를 한곳에서.";
+  "남인도 첸나이 한인회(KAIC) 공식 커뮤니티. 행사, 한인회보, 갤러리, 뉴스, 생활 가이드, 동호회, 기업 정보를 한곳에서.";
 
 export const DEFAULT_KEYWORDS = [
   "Chennai Korean Association",
   "Korean Community Chennai",
   "South India Korean Community",
+  "KAIC",
   "ICKOA",
   "재인도 첸나이 한인회",
   "첸나이 한인회",
@@ -114,7 +115,7 @@ export const rootMetadata: Metadata = {
 
 export const adminMetadata: Metadata = createMetadata({
   title: "관리자",
-  description: "ICKOA 관리자 페이지",
+  description: "KAIC 관리자 페이지",
   path: "/admin",
   noIndex: true,
 });

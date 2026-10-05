@@ -224,13 +224,20 @@ export async function createLeadershipMember(data: {
   role: string;
   bio?: string;
   image?: string;
-  order?: number;
+  level?: number;
   published?: boolean;
 }) {
   await requireContentAdmin();
   const name = data.name.trim();
   const role = data.role.trim();
   if (!name || !role) throw new Error("이름과 직책을 입력해 주세요.");
+
+  const level = Math.min(4, Math.max(1, Number(data.level) || 1));
+  const maxOrder = await prisma.leadershipMember.aggregate({
+    where: { level },
+    _max: { order: true },
+  });
+  const order = (maxOrder._max.order ?? 0) + 1;
 
   const member = await prisma.leadershipMember.create({
     data: {
@@ -239,7 +246,8 @@ export async function createLeadershipMember(data: {
       role,
       bio: data.bio?.trim() || null,
       image: data.image?.trim() || null,
-      order: data.order ?? 0,
+      level,
+      order,
       published: data.published ?? true,
     },
   });
@@ -255,14 +263,27 @@ export async function updateLeadershipMember(
     role: string;
     bio?: string;
     image?: string;
-    order?: number;
+    level?: number;
     published?: boolean;
   },
 ) {
   await requireContentAdmin();
+  const existing = await prisma.leadershipMember.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
   const name = data.name.trim();
   const role = data.role.trim();
   if (!name || !role) throw new Error("이름과 직책을 입력해 주세요.");
+
+  const level = Math.min(4, Math.max(1, Number(data.level) || existing.level || 1));
+  let order = existing.order;
+  if (level !== existing.level) {
+    const maxOrder = await prisma.leadershipMember.aggregate({
+      where: { level },
+      _max: { order: true },
+    });
+    order = (maxOrder._max.order ?? 0) + 1;
+  }
 
   const member = await prisma.leadershipMember.update({
     where: { id },
@@ -272,7 +293,8 @@ export async function updateLeadershipMember(
       role,
       bio: data.bio?.trim() || null,
       image: data.image?.trim() || null,
-      order: data.order ?? 0,
+      level,
+      order,
       published: data.published ?? true,
     },
   });

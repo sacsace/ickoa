@@ -21,7 +21,7 @@ export function AboutSection() {
             <div className="relative aspect-[16/9]">
               <Image
                 src={heroBanners[0]!.image}
-                alt="ICKOA community"
+                alt="KAIC community"
                 fill
                 className="object-cover"
                 sizes="(max-width:1024px) 100vw, 58vw"
@@ -39,7 +39,7 @@ export function AboutSection() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">교민</dt>
-                  <dd className="mt-1 font-display text-xl font-semibold">500+</dd>
+                  <dd className="mt-1 font-display text-xl font-semibold">5000+</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">동호회</dt>

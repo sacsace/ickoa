@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 
 export const metadata = createMetadata({
   title: "활동 보고서",
-  description: "활동 보고서 — 재인도 첸나이 한인회(ICKOA)",
+  description: "활동 보고서 — 재인도 첸나이 한인회(KAIC)",
   path: "/about/reports",
 });
 

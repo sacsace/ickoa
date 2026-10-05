@@ -20,7 +20,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: board.name,
-    description: `${board.name} — ICKOA 커뮤니티 게시판`,
+    description: `${board.name} — KAIC 커뮤니티 게시판`,
     path: `/community/${slug}`,
   });
 }

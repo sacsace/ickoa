@@ -121,7 +121,7 @@ export function PortalHome({
                 <div className="flex flex-wrap items-end justify-between gap-3">
                   <div className="min-w-0 max-w-xl">
                     <p className="text-[11px] font-semibold tracking-wide text-white/70">
-                      ICKOA · Chennai
+                      KAIC · Chennai
                     </p>
                     <h1 className="mt-1 truncate text-lg font-bold tracking-tight text-white md:text-xl">
                       {t.hero.title}
@@ -414,7 +414,7 @@ export function PortalHome({
                 </div>
                 <div>
                   <p className="text-muted-foreground">교민</p>
-                  <p className="font-bold text-brand">500+</p>
+                  <p className="font-bold text-brand">5000+</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">동호회</p>

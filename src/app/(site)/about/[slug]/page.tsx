@@ -1,4 +1,6 @@
+import Image from "next/image";
 import { PageHeader } from "@/components/ui/page-header";
+import { LeadershipOrgChart } from "@/components/about/leadership-org-chart";
 import { createMetadata } from "@/lib/seo";
 import { ensureAboutDefaults } from "@/lib/about-defaults";
 import { prisma } from "@/lib/prisma";
@@ -24,11 +26,12 @@ export async function generateMetadata({
     bylaws: "정관",
     history: "연혁",
     leadership: "회장단",
+    ci: "CI",
   };
   if (titles[slug]) {
     return createMetadata({
       title: titles[slug],
-      description: `${titles[slug]} — 재인도 첸나이 한인회(ICKOA)`,
+      description: `${titles[slug]} — 재인도 첸나이 한인회(KAIC)`,
       path: `/about/${slug}`,
     });
   }
@@ -38,7 +41,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: page.title,
-    description: `${page.title} — 재인도 첸나이 한인회(ICKOA)`,
+    description: `${page.title} — 재인도 첸나이 한인회(KAIC)`,
     path: `/about/${slug}`,
   });
 }
@@ -141,50 +144,80 @@ export default async function AboutSubPage({
   if (slug === "leadership") {
     const members = await prisma.leadershipMember.findMany({
       where: { published: true },
-      orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+      orderBy: [{ level: "asc" }, { order: "asc" }, { createdAt: "asc" }],
     });
     return (
       <>
         <PageHeader title="회장단" backHref="/about" />
-        <div className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+        <div className="mx-auto w-full max-w-[1356px] px-4 py-8 md:px-6 md:py-10">
           {members.length === 0 ? (
             <p className="text-muted-foreground">등록된 회장단이 없습니다.</p>
           ) : (
-            <ul className="divide-y divide-border border border-border">
-              {members.map((m) => (
-                <li key={m.id} className="flex items-start gap-4 px-4 py-4">
-                  {m.image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={m.image}
-                      alt=""
-                      className="h-14 w-14 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand text-lg font-bold text-white">
-                      {m.name.charAt(0)}
-                    </span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-brand">{m.role}</p>
-                    <p className="mt-0.5 font-bold">
-                      {m.name}
-                      {m.nameEn ? (
-                        <span className="ml-2 text-sm font-normal text-muted-foreground">
-                          {m.nameEn}
-                        </span>
-                      ) : null}
-                    </p>
-                    {m.bio ? (
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
-                        {m.bio}
-                      </p>
-                    ) : null}
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <LeadershipOrgChart members={members} />
           )}
+        </div>
+      </>
+    );
+  }
+
+  if (slug === "ci") {
+    return (
+      <>
+        <PageHeader
+          title="CI"
+          subtitle="Corporate Identity — 첸나이한인회 브랜드 가이드"
+          backHref="/about"
+        />
+        <div className="mx-auto w-full max-w-[1356px] space-y-8 px-4 py-8 md:px-6 md:py-10">
+          <section className="border border-border bg-card p-6 md:p-8">
+            <h2 className="text-base font-bold">로고</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              재인도 첸나이 한인회(KAIC)의 공식 로고입니다. 행사 자료, 인쇄물, 디지털
+              콘텐츠에 사용할 수 있습니다.
+            </p>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col items-center justify-center border border-border bg-white px-6 py-10">
+                <Image src="/logo.png" alt="KAIC 로고" width={220} height={72} className="h-16 w-auto object-contain" />
+                <p className="mt-4 text-xs text-muted-foreground">기본 로고 (밝은 배경)</p>
+              </div>
+              <div className="flex flex-col items-center justify-center border border-border bg-[#0b1f3a] px-6 py-10">
+                <Image src="/logo-dark.png" alt="KAIC 다크 로고" width={220} height={72} className="h-16 w-auto object-contain" />
+                <p className="mt-4 text-xs text-white/70">다크 로고 (어두운 배경)</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="border border-border bg-card p-6 md:p-8">
+            <h2 className="text-base font-bold">브랜드 명칭</h2>
+            <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
+              <div className="border border-border px-4 py-3">
+                <dt className="text-xs text-muted-foreground">국문</dt>
+                <dd className="mt-1 font-semibold">첸나이한인회 / 재인도 첸나이 한인회</dd>
+              </div>
+              <div className="border border-border px-4 py-3">
+                <dt className="text-xs text-muted-foreground">영문</dt>
+                <dd className="mt-1 font-semibold">Korean Association in Chennai (KAIC)</dd>
+              </div>
+              <div className="border border-border px-4 py-3">
+                <dt className="text-xs text-muted-foreground">표어</dt>
+                <dd className="mt-1 font-semibold">우리들의 열린 공간</dd>
+              </div>
+              <div className="border border-border px-4 py-3">
+                <dt className="text-xs text-muted-foreground">영문 표어</dt>
+                <dd className="mt-1 font-semibold">Our Open Space</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section className="border border-border bg-card p-6 md:p-8">
+            <h2 className="text-base font-bold">사용 안내</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground">
+              <li>로고 비율을 임의로 늘리거나 줄이지 말아 주세요.</li>
+              <li>로고 색상을 변경하거나 효과를 추가하지 말아 주세요.</li>
+              <li>공식 문서·행사 현수막·명함에는 기본 로고 사용을 권장합니다.</li>
+              <li>문의: edit@ickoa.org</li>
+            </ul>
+          </section>
         </div>
       </>
     );

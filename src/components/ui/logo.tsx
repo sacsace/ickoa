@@ -33,7 +33,7 @@ export function Logo({ size = 36, forceDark }: { size?: number; forceDark?: bool
     >
       <Image
         src={src}
-        alt="첸나이 한인회 ICKOA"
+        alt="첸나이 한인회 KAIC"
         width={size}
         height={size}
         className="h-full w-full object-cover"
@@ -69,7 +69,7 @@ export function LogoWithText({
               inverted ? "text-white/70" : "text-muted-foreground",
             )}
           >
-            ICKOA
+            KAIC
           </p>
         </div>
       )}

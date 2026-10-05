@@ -35,7 +35,7 @@ export const mainNavigation: NavItem[] = [
     children: [
       { id: "g-all", href: "/gallery", labelKo: "전체 갤러리", labelEn: "All Albums" },
       { id: "g-life", href: "/gallery/chennai-life", labelKo: "첸나이 생활", labelEn: "Living in Chennai" },
-      { id: "g-ickoa", href: "/gallery/ickoa-events", labelKo: "한인회 행사", labelEn: "ICKOA Events" },
+      { id: "g-ickoa", href: "/gallery/ickoa-events", labelKo: "한인회 행사", labelEn: "KAIC Events" },
       { id: "g-clubs", href: "/gallery/clubs-sports", labelKo: "동호회 활동", labelEn: "Clubs & Sports" },
     ],
   },
@@ -99,12 +99,13 @@ export const mainNavigation: NavItem[] = [
     labelKo: "한인회 소개",
     labelEn: "About",
     children: [
-      { id: "a-main", href: "/about", labelKo: "한인회 소개", labelEn: "About ICKOA" },
+      { id: "a-main", href: "/about", labelKo: "한인회 소개", labelEn: "About KAIC" },
       { id: "a-history", href: "/about/history", labelKo: "연혁", labelEn: "History" },
       { id: "a-leadership", href: "/about/leadership", labelKo: "회장단", labelEn: "Leadership" },
       { id: "a-bylaws", href: "/about/bylaws", labelKo: "정관", labelEn: "Bylaws" },
       { id: "a-reports", href: "/about/reports", labelKo: "활동 보고서", labelEn: "Reports" },
       { id: "a-sponsors", href: "/about/sponsors", labelKo: "후원사", labelEn: "Sponsors" },
+      { id: "a-ci", href: "/about/ci", labelKo: "CI", labelEn: "CI" },
       { id: "a-donate", href: "/donate", labelKo: "후원하기 (Razorpay)", labelEn: "Donate (Razorpay)" },
     ],
   },

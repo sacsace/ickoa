@@ -44,7 +44,7 @@ export async function createDonationOrder(data: {
     currency: "INR",
     receipt,
     notes: {
-      purpose: "ICKOA Donation",
+      purpose: "KAIC Donation",
       donorName,
       donorEmail,
     },

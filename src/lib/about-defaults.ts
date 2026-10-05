@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { inferLeadershipLevel } from "@/lib/leadership";
 
 const DEFAULT_BYLAW = {
   kind: "bylaws",
@@ -31,13 +32,39 @@ const DEFAULT_REPORT = {
 };
 
 const DEFAULT_LEADERSHIP = [
-  { name: "김○○", role: "회장", order: 1, published: true },
-  { name: "이○○", role: "부회장", order: 2, published: true },
-  { name: "박○○", role: "부회장", order: 3, published: true },
-  { name: "최○○", role: "사무총장", order: 4, published: true },
-  { name: "정○○", role: "재무", order: 5, published: true },
-  { name: "한○○", role: "문화", order: 6, published: true },
+  { name: "김○○", role: "회장", level: 1, order: 1, published: true },
+  { name: "이○○", role: "부회장", level: 2, order: 1, published: true },
+  { name: "박○○", role: "부회장", level: 2, order: 2, published: true },
+  { name: "최○○", role: "사무총장", level: 3, order: 1, published: true },
+  { name: "정○○", role: "재무", level: 3, order: 2, published: true },
+  { name: "한○○", role: "문화", level: 3, order: 3, published: true },
 ];
+
+async function backfillLeadershipLevels() {
+  try {
+    const members = await prisma.leadershipMember.findMany({
+      select: { id: true, role: true, order: true },
+    });
+    if (members.length === 0) return;
+
+    const roles = members.map((m) => m.role);
+    const hasHierarchy =
+      roles.some((r) => r.includes("회장") && !r.includes("부")) &&
+      roles.some((r) => r.includes("부회장") || r.includes("사무"));
+    if (!hasHierarchy) return;
+
+    await prisma.$transaction(
+      members.map((m) =>
+        prisma.leadershipMember.update({
+          where: { id: m.id },
+          data: { level: inferLeadershipLevel(m.role) },
+        }),
+      ),
+    );
+  } catch {
+    // Schema/client may not have `level` yet (local generate or db push pending).
+  }
+}
 
 /** 초기 데이터가 없으면 기본값을 한 번 채워 넣습니다. */
 export async function ensureAboutDefaults() {
@@ -60,5 +87,7 @@ export async function ensureAboutDefaults() {
   }
   if (leadershipCount === 0) {
     await prisma.leadershipMember.createMany({ data: DEFAULT_LEADERSHIP });
+  } else {
+    await backfillLeadershipLevels();
   }
 }

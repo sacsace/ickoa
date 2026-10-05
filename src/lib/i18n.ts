@@ -103,6 +103,7 @@ export const translations = {
       reports: "활동 보고서",
       finance: "재무 공개",
       sponsors: "후원사",
+      ci: "CI",
     },
     footer: {
       description: "우리들의 열린 공간",
@@ -148,7 +149,7 @@ export const translations = {
     },
     gallery: {
       title: "Our Moments",
-      subtitle: "Chennai streets, ICKOA events, club life — community in photos",
+      subtitle: "Chennai streets, KAIC events, club life — community in photos",
       viewAlbums: "View Albums",
       viewAll: "Full Gallery",
       seeMore: "See more",
@@ -216,6 +217,7 @@ export const translations = {
       reports: "Activity Reports",
       finance: "Financial Disclosure",
       sponsors: "Sponsors",
+      ci: "CI",
     },
     footer: {
       description: "Our Open Space",

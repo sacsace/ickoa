@@ -7,6 +7,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
 import { createLeadershipMember, updateLeadershipMember } from "@/actions/about";
+import { LEADERSHIP_LEVELS, inferLeadershipLevel } from "@/lib/leadership";
 
 type LeadershipFormProps = {
   initial?: {
@@ -16,6 +17,7 @@ type LeadershipFormProps = {
     role: string;
     bio: string | null;
     image: string | null;
+    level?: number;
     order: number;
     published: boolean;
   };
@@ -31,7 +33,13 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
     role: initial?.role ?? "",
     bio: initial?.bio ?? "",
     image: initial?.image ?? "",
-    order: String(initial?.order ?? 0),
+    level: String(
+      initial?.level && initial.level > 0
+        ? initial.level
+        : initial?.role
+          ? inferLeadershipLevel(initial.role)
+          : 1,
+    ),
     published: initial?.published ?? true,
   });
 
@@ -44,7 +52,7 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
       role: form.role,
       bio: form.bio,
       image: form.image,
-      order: Number(form.order) || 0,
+      level: Number(form.level) || 1,
       published: form.published,
     };
     startTransition(async () => {
@@ -63,8 +71,27 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
     <>
       <AdminPageHeader title={initial ? "임원 수정" : "임원 등록"} />
       <AdminBackLink href="/admin/about/leadership" />
+      <p className="mb-4 text-sm text-muted-foreground">
+        조직도 단계를 고르면 사이트에 그 단 위치로 표시됩니다. 같은 단계 안에서는 등록 순서로
+        왼쪽부터 나열됩니다.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4 border border-border p-4">
         <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">조직도 단계 *</label>
+            <select
+              value={form.level}
+              onChange={(e) => setForm({ ...form, level: e.target.value })}
+              className="h-11 w-full border border-border bg-background px-4 text-sm"
+              required
+            >
+              {LEADERSHIP_LEVELS.map((level) => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
+            </select>
+          </div>
           <div>
             <label className="mb-1 block text-xs text-muted-foreground">직책 *</label>
             <input
@@ -73,15 +100,6 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
               className="h-11 w-full border border-border bg-background px-4 text-sm"
               placeholder="회장"
               required
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs text-muted-foreground">표시 순서</label>
-            <input
-              type="number"
-              value={form.order}
-              onChange={(e) => setForm({ ...form, order: e.target.value })}
-              className="h-11 w-full border border-border bg-background px-4 text-sm"
             />
           </div>
           <div>

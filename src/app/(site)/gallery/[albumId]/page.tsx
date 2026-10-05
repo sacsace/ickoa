@@ -17,7 +17,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: album.title,
-    description: album.description || `${album.title} — ICKOA 포토 갤러리`,
+    description: album.description || `${album.title} — KAIC 포토 갤러리`,
     path: `/gallery/${albumId}`,
     image: album.cover,
   });

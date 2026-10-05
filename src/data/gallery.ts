@@ -16,7 +16,7 @@ export type GalleryAlbum = {
   photos: GalleryPhoto[];
 };
 
-/** ICKOA 앨범 — 첸나이 한인 생활 & 한국 대표 행사 */
+/** KAIC 앨범 — 첸나이 한인 생활 & 한국 대표 행사 */
 export const galleryAlbums: GalleryAlbum[] = [
   {
     id: "chennai-life",
@@ -38,9 +38,9 @@ export const galleryAlbums: GalleryAlbum[] = [
   {
     id: "ickoa-events",
     title: "한인회와 함께한 순간",
-    titleEn: "ICKOA Moments",
+    titleEn: "KAIC Moments",
     description: "2014년 등록 이래, 첸나이한인회가 만들어온 교민 공동체의 기록",
-    descriptionEn: "Community milestones since ICKOA's registration in Chennai, 2014",
+    descriptionEn: "Community milestones since KAIC's registration in Chennai, 2014",
     cover: "/image/hero-community.jpg",
     category: "ickoa",
     photos: [
@@ -57,7 +57,7 @@ export const galleryAlbums: GalleryAlbum[] = [
     title: "동호회, 함께 땀 흘리는 날",
     titleEn: "Clubs & Sports",
     description: "골프, 축구, 농구, 배드민턴 — 첸나이 교민 동호회 활동",
-    descriptionEn: "Golf, soccer, basketball, badminton — ICKOA club activities",
+    descriptionEn: "Golf, soccer, basketball, badminton — KAIC club activities",
     cover: "https://images.unsplash.com/photo-1535131749006-b7f583c4db27?w=800&q=80",
     category: "clubs",
     photos: [
@@ -76,7 +76,7 @@ export const heroBanners = [
     id: "1",
     image: "/image/hero-community.jpg",
     title: "2022 첸나이 한인 골프대회 & 송년의 밤",
-    tag: "ICKOA",
+    tag: "KAIC",
   },
   {
     id: "2",

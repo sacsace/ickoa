@@ -15,6 +15,7 @@ const aboutPages = [
   { href: "/about/reports", title: "활동 보고서", description: "연간 활동 보고서" },
   { href: "/about/finance", title: "재무 공개", description: "재정 운영 투명성 공개" },
   { href: "/about/sponsors", title: "후원사", description: "한인회 후원 기업 및 단체" },
+  { href: "/about/ci", title: "CI", description: "로고 및 브랜드 아이덴티티 가이드" },
 ];
 
 export default function AboutPage() {
@@ -36,7 +37,7 @@ export default function AboutPage() {
               <p className="text-xs text-muted-foreground">Years</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">500+</p>
+              <p className="text-2xl font-bold text-foreground">5000+</p>
               <p className="text-xs text-muted-foreground">Members</p>
             </div>
             <div>

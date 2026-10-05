@@ -11,8 +11,8 @@ import { galleryAlbums as defaultAlbums, type GalleryAlbum } from "@/data/galler
 import { cn } from "@/lib/utils";
 
 const categoryLabels = {
-  ko: { life: "Chennai", korea: "Korea", ickoa: "ICKOA", clubs: "Clubs" },
-  en: { life: "Chennai", korea: "Korea", ickoa: "ICKOA", clubs: "Clubs" },
+  ko: { life: "Chennai", korea: "Korea", ickoa: "KAIC", clubs: "Clubs" },
+  en: { life: "Chennai", korea: "Korea", ickoa: "KAIC", clubs: "Clubs" },
 };
 
 const bentoSpans = [

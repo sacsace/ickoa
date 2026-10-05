@@ -2,7 +2,11 @@ import { PrismaClient } from "@prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma?: PrismaClient;
+  prismaRev?: number;
 };
+
+/** Bump when Prisma schema fields change so Next.js HMR does not keep a stale client. */
+const PRISMA_SCHEMA_REV = 3;
 
 function createPrismaClient() {
   return new PrismaClient({
@@ -11,16 +15,16 @@ function createPrismaClient() {
 }
 
 function getPrismaClient() {
-  const cached = globalForPrisma.prisma as PrismaClient | undefined;
-  // Dev HMR can keep a PrismaClient generated before schema changes.
-  if (cached && !("pageView" in (cached as object))) {
-    void (cached as PrismaClient).$disconnect().catch(() => undefined);
+  const cached = globalForPrisma.prisma;
+  if (cached && globalForPrisma.prismaRev !== PRISMA_SCHEMA_REV) {
+    void cached.$disconnect().catch(() => undefined);
     globalForPrisma.prisma = undefined;
-    return createPrismaClient();
   }
-  return cached ?? createPrismaClient();
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createPrismaClient();
+    globalForPrisma.prismaRev = PRISMA_SCHEMA_REV;
+  }
+  return globalForPrisma.prisma;
 }
 
 export const prisma = getPrismaClient();
-
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

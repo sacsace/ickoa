@@ -64,7 +64,7 @@ export function DonateForm({ razorpayConfigured }: DonateFormProps) {
     successTitle: isKo ? "후원이 완료되었습니다!" : "Thank you for your donation!",
     successDesc: isKo
       ? "첸나이 한인회 활동에 소중한 후원을 보내주셔서 감사합니다."
-      : "Your support helps ICKOA serve the Chennai Korean community.",
+      : "Your support helps KAIC serve the Chennai Korean community.",
     notConfigured: isKo
       ? "Razorpay 결제 키가 설정되지 않았습니다. .env에 RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET을 추가해 주세요."
       : "Razorpay is not configured yet. Add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env.",
@@ -101,7 +101,7 @@ export function DonateForm({ razorpayConfigured }: DonateFormProps) {
           key: order.keyId,
           amount: order.amount,
           currency: order.currency,
-          name: "ICKOA",
+          name: "KAIC",
           description: isKo ? "첸나이 한인회 후원" : "Korean Association in Chennai",
           order_id: order.orderId,
           prefill: {

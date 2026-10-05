@@ -5,7 +5,7 @@ export async function GET() {
   const session = await auth();
   return NextResponse.json({
     status: "ok",
-    service: "ICKOA",
+    service: "KAIC",
     authenticated: !!session,
     timestamp: new Date().toISOString(),
   });

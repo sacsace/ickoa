@@ -147,7 +147,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col bg-background">
       <header className="border-b border-border">
         <div className="flex h-12 items-center justify-between px-4 md:px-6">
-          <span className="text-sm font-medium">ICKOA 관리자</span>
+          <span className="text-sm font-medium">KAIC 관리자</span>
           <div className="flex items-center gap-4 text-sm">
             <Link
               href="/"
