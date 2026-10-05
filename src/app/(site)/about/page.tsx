@@ -27,12 +27,12 @@ export default function AboutPage() {
       <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
         <div className="mb-12 rounded-2xl border border-border bg-card p-8">
           <p className="leading-relaxed text-muted-foreground">
-            재인도 첸나이 한인회(Korean Association in Chennai)는 1980년대 설립 이래,
+            재인도 첸나이 한인회(Korean Association in Chennai)는 2000년 설립 이래,
             첸나이 및 남인도 지역 한인 교민들의 모임터이자 상호 협력의 중심으로 활동해 왔습니다.
           </p>
           <div className="mt-6 grid grid-cols-3 gap-4 text-center">
             <div>
-              <p className="text-2xl font-bold text-foreground">40+</p>
+              <p className="text-2xl font-bold text-foreground">25+</p>
               <p className="text-xs text-muted-foreground">Years</p>
             </div>
             <div>

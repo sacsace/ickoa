@@ -404,13 +404,13 @@ export function PortalHome({
           <div className="grid gap-0 md:grid-cols-[1.2fr_1fr]">
             <div className="border-b border-border p-4 md:border-b-0 md:border-r">
               <p className="text-[13px] leading-relaxed text-muted-foreground">
-                1980년대부터 첸나이에 모인 한인 가족들. 한인회는 문화 행사, 동호회,
+                2000년부터 첸나이에 모인 한인 가족들. 한인회는 문화 행사, 동호회,
                 신규 주재원 환영까지 — 낯선 땅에서 서로의 이웃이 되어 왔습니다.
               </p>
               <div className="mt-4 flex gap-6 text-[13px]">
                 <div>
                   <p className="text-muted-foreground">역사</p>
-                  <p className="font-bold text-brand">40+년</p>
+                  <p className="font-bold text-brand">25+년</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">교민</p>

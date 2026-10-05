@@ -338,17 +338,16 @@ export async function updateGuideCategory(
 export async function deleteGuideCategory(id: string) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
   const existing = await prisma.guideCategory.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  if (!existing) return { error: "카테고리를 찾을 수 없습니다." };
 
-  const guideCount = await prisma.guide.count({ where: { category: existing.name } });
-  if (guideCount > 0) {
-    throw new Error(`이 카테고리에 가이드 ${guideCount}건이 있어 삭제할 수 없습니다.`);
-  }
-
-  await prisma.guideCategory.delete({ where: { id } });
+  await prisma.$transaction([
+    prisma.guide.deleteMany({ where: { category: existing.name } }),
+    prisma.guideCategory.delete({ where: { id } }),
+  ]);
   revalidatePath("/guide");
   revalidatePath("/admin/guides");
   revalidatePath("/admin/guides/categories");
+  return {};
 }
 
 function slugifyTaxonomy(name: string) {

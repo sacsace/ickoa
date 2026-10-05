@@ -103,7 +103,9 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
         title="카테고리 삭제"
         description={
           deleteTarget
-            ? `「${deleteTarget.name}」 카테고리를 삭제합니다.`
+            ? deleteTarget.guideCount > 0
+              ? `「${deleteTarget.name}」 카테고리와 가이드 ${deleteTarget.guideCount}건을 함께 삭제합니다. 삭제 후에는 복구할 수 없습니다.`
+              : `「${deleteTarget.name}」 카테고리를 삭제합니다.`
             : ""
         }
         confirmLabel="삭제"
@@ -113,11 +115,16 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
           if (!deleteTarget) return;
           startTransition(async () => {
             try {
-              await deleteGuideCategory(deleteTarget.id);
+              const result = await deleteGuideCategory(deleteTarget.id);
+              if (result.error) {
+                setError(result.error);
+                setDeleteTarget(null);
+                return;
+              }
               setDeleteTarget(null);
               router.refresh();
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+            } catch {
+              setError("삭제에 실패했습니다.");
               setDeleteTarget(null);
             }
           });

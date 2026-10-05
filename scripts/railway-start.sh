@@ -22,11 +22,16 @@ if [ -n "$DATA_ROOT" ]; then
   done
 fi
 
-echo "Syncing database schema..."
+echo "Syncing database schema (data is kept)..."
 npx prisma db push --skip-generate
 
-echo "Seeding database (idempotent upserts)..."
-npx tsx prisma/seed.ts || echo "Seed skipped or failed (continuing)"
+# Never overwrite Railway data on deploy. Seed only when SEED_DATABASE=1.
+if [ "${SEED_DATABASE:-0}" = "1" ]; then
+  echo "SEED_DATABASE=1: running seed..."
+  npx tsx prisma/seed.ts || echo "Seed skipped or failed (continuing)"
+else
+  echo "Skipping seed to preserve existing Railway database."
+fi
 
 echo "Starting Next.js..."
 exec npx next start -H 0.0.0.0 -p "${PORT:-3700}"

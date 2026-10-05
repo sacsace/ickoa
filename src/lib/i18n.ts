@@ -96,7 +96,7 @@ export const translations = {
     },
     about: {
       title: "우리 한인회",
-      subtitle: "1980년대부터 이어온 첸나이 교민 공동체",
+      subtitle: "2000년부터 이어온 첸나이 교민 공동체",
       history: "연혁",
       leadership: "회장단",
       bylaws: "정관",
@@ -105,8 +105,7 @@ export const translations = {
       sponsors: "후원사",
     },
     footer: {
-      description:
-        "첸나이와 남인도에 사는 한인 가족의 모임터. 함께하면 외롭지 않습니다.",
+      description: "우리들의 열린 공간",
       quickLinks: "바로가기",
       contact: "연락처",
       follow: "Follow Us",
@@ -210,7 +209,7 @@ export const translations = {
     },
     about: {
       title: "Our Association",
-      subtitle: "A Chennai Korean community since the 1980s",
+      subtitle: "A Chennai Korean community since 2000",
       history: "History",
       leadership: "Leadership",
       bylaws: "Bylaws",
@@ -219,8 +218,7 @@ export const translations = {
       sponsors: "Sponsors",
     },
     footer: {
-      description:
-        "A home for Korean families in Chennai and South India. You're never alone when we're together.",
+      description: "Our Open Space",
       quickLinks: "Quick Links",
       contact: "Contact",
       follow: "Follow Us",

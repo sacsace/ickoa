@@ -29,13 +29,13 @@ export function AboutSection() {
             </div>
             <div className="p-6 md:p-8">
               <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-                1980년대부터 첸나이에 모인 한인 가족들. 한인회는 문화 행사, 동호회,
+                2000년부터 첸나이에 모인 한인 가족들. 한인회는 문화 행사, 동호회,
                 신규 주재원 환영까지 — 낯선 땅에서 서로의 이웃이 되어 왔습니다.
               </p>
               <dl className="mt-8 grid grid-cols-3 gap-4 border-t border-border pt-6 text-sm">
                 <div>
                   <dt className="text-muted-foreground">역사</dt>
-                  <dd className="mt-1 font-display text-xl font-semibold">40+년</dd>
+                  <dd className="mt-1 font-display text-xl font-semibold">25+년</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">교민</dt>
