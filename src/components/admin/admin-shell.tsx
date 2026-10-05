@@ -65,11 +65,16 @@ const sections: NavSection[] = [
     items: [{ href: "/admin/about", label: "소개 관리" }],
   },
   {
+    title: "한인 기업",
+    items: [{ href: "/admin/businesses", label: "디렉토리" }],
+  },
+  {
     title: "커뮤니티",
     items: [
       { href: "/admin/posts", label: "게시글" },
       { href: "/admin/boards", label: "게시판 카테고리" },
       { href: "/admin/clubs", label: "동호회" },
+      { href: "/admin/club-requests", label: "동호회 등록 요청" },
     ],
   },
   {
@@ -176,11 +181,11 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       </header>
 
       <div className="mx-auto flex w-full max-w-6xl flex-1">
-        <aside className="hidden w-48 shrink-0 border-r border-border md:block">
-          <nav className="space-y-5 p-4">
+        <aside className="hidden w-52 shrink-0 border-r border-border md:block">
+          <nav className="divide-y divide-border p-3">
             {sections.map((section) => (
-              <div key={section.title}>
-                <p className="mb-1.5 px-2 text-[11px] font-semibold tracking-wide text-muted-foreground">
+              <div key={section.title} className="py-4 first:pt-1 last:pb-1">
+                <p className="mb-2 px-2 text-[11px] font-semibold tracking-wide text-muted-foreground/80">
                   {section.title}
                 </p>
                 <div className="space-y-0.5">

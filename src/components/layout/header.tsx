@@ -11,17 +11,12 @@ import { LogoWithText } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isSiteSession } from "@/lib/session-kind";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   mainNavigation,
   getNavLabel,
   getNavChildLabel,
 } from "@/data/navigation";
-
-function userInitial(name?: string | null) {
-  const trimmed = name?.trim();
-  if (!trimmed) return "U";
-  return trimmed.charAt(0).toUpperCase();
-}
 
 export function Header() {
   const pathname = usePathname();
@@ -160,18 +155,7 @@ export function Header() {
                 <span className="max-w-[140px] truncate">
                   {session!.user.name ?? "회원"}
                 </span>
-                {session!.user.image ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={session!.user.image}
-                    alt=""
-                    className="h-7 w-7 shrink-0 rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand text-[11px] font-bold text-white">
-                    {userInitial(session!.user.name)}
-                  </span>
-                )}
+                <UserAvatar src={session!.user.image} name={session!.user.name} />
               </Link>
             </div>
           ) : null}

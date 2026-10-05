@@ -581,6 +581,158 @@ export async function deleteClub(id: string) {
   revalidatePath("/admin/clubs");
 }
 
+export async function approveClubRequest(id: string) {
+  await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
+  const request = await prisma.clubRequest.findUnique({ where: { id } });
+  if (!request) throw new Error("요청을 찾을 수 없습니다.");
+  if (request.status !== "PENDING") throw new Error("이미 처리된 요청입니다.");
+
+  const name = request.name.trim();
+  const slug = (slugifyTaxonomy(name) || `club-${Date.now()}`).slice(0, 60);
+  const existing = await prisma.club.findFirst({
+    where: { OR: [{ name }, { slug }] },
+  });
+  if (existing) throw new Error("이미 같은 이름 또는 슬러그의 동호회가 있습니다.");
+
+  const club = await prisma.club.create({
+    data: {
+      name,
+      slug,
+      description: request.description,
+    },
+  });
+  await prisma.clubMember.upsert({
+    where: { clubId_userId: { clubId: club.id, userId: request.userId } },
+    update: {},
+    create: { clubId: club.id, userId: request.userId, role: "member" },
+  });
+  await prisma.clubRequest.update({
+    where: { id },
+    data: { status: "APPROVED", reviewedAt: new Date() },
+  });
+  revalidatePath("/clubs");
+  revalidatePath(`/clubs/${club.slug}`);
+  revalidatePath("/admin/clubs");
+  revalidatePath("/admin/club-requests");
+}
+
+export async function rejectClubRequest(id: string) {
+  await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
+  const request = await prisma.clubRequest.findUnique({ where: { id } });
+  if (!request) throw new Error("요청을 찾을 수 없습니다.");
+  if (request.status !== "PENDING") throw new Error("이미 처리된 요청입니다.");
+
+  await prisma.clubRequest.update({
+    where: { id },
+    data: { status: "REJECTED", reviewedAt: new Date() },
+  });
+  revalidatePath("/admin/club-requests");
+}
+
+function parseOptionalFloat(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  const n = Number(trimmed);
+  return Number.isFinite(n) ? n : null;
+}
+
+export async function createBusiness(data: {
+  name: string;
+  category: string;
+  region: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  lat?: string;
+  lng?: string;
+  description?: string;
+}) {
+  const session = await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const name = data.name.trim();
+  const category = data.category.trim();
+  const region = data.region.trim();
+  const address = data.address.trim();
+  if (!name || !category || !region || !address) {
+    throw new Error("기업명, 업종, 지역, 주소를 입력해 주세요.");
+  }
+
+  const business = await prisma.business.create({
+    data: {
+      name,
+      category,
+      region,
+      address,
+      phone: data.phone?.trim() || null,
+      website: data.website?.trim().replace(/^https?:\/\//, "") || null,
+      lat: parseOptionalFloat(data.lat),
+      lng: parseOptionalFloat(data.lng),
+      description: data.description?.trim() || null,
+      ownerId: session.user.id,
+    },
+  });
+  revalidatePath("/business");
+  revalidatePath("/");
+  revalidatePath("/admin/businesses");
+  return business;
+}
+
+export async function updateBusiness(
+  id: string,
+  data: {
+    name: string;
+    category: string;
+    region: string;
+    address: string;
+    phone?: string;
+    website?: string;
+    lat?: string;
+    lng?: string;
+    description?: string;
+  },
+) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const existing = await prisma.business.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
+  const name = data.name.trim();
+  const category = data.category.trim();
+  const region = data.region.trim();
+  const address = data.address.trim();
+  if (!name || !category || !region || !address) {
+    throw new Error("기업명, 업종, 지역, 주소를 입력해 주세요.");
+  }
+
+  const business = await prisma.business.update({
+    where: { id },
+    data: {
+      name,
+      category,
+      region,
+      address,
+      phone: data.phone?.trim() || null,
+      website: data.website?.trim().replace(/^https?:\/\//, "") || null,
+      lat: parseOptionalFloat(data.lat),
+      lng: parseOptionalFloat(data.lng),
+      description: data.description?.trim() || null,
+    },
+  });
+  revalidatePath("/business");
+  revalidatePath(`/business/${id}`);
+  revalidatePath("/");
+  revalidatePath("/admin/businesses");
+  return business;
+}
+
+export async function deleteBusiness(id: string) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const existing = await prisma.business.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+  await prisma.business.delete({ where: { id } });
+  revalidatePath("/business");
+  revalidatePath("/");
+  revalidatePath("/admin/businesses");
+}
+
 export async function deletePost(postId: string) {
   await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN"]);
   await prisma.post.delete({ where: { id: postId } });

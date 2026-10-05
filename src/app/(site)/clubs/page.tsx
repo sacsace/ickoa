@@ -19,6 +19,14 @@ export default async function ClubsPage() {
     <>
       <PageHeader title="동호회" subtitle="관심사가 같은 교민들과 함께하세요" />
       <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+        <div className="mb-6 flex justify-end">
+          <Link
+            href="/clubs/request"
+            className="inline-flex h-8 items-center justify-center rounded-[3px] bg-brand px-3 text-xs font-semibold text-white hover:bg-brand-dark"
+          >
+            동호회 등록 요청
+          </Link>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {clubs.map((club) => (
             <div

@@ -6,7 +6,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 /** Bump when Prisma schema fields change so Next.js HMR does not keep a stale client. */
-const PRISMA_SCHEMA_REV = 3;
+const PRISMA_SCHEMA_REV = 4;
 
 function createPrismaClient() {
   return new PrismaClient({

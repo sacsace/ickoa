@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Camera } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { updateSiteProfile } from "@/actions/account";
 
 type AccountFormProps = {
@@ -20,12 +21,6 @@ type AccountFormProps = {
     image: string | null;
   };
 };
-
-function userInitial(name?: string | null) {
-  const trimmed = name?.trim();
-  if (!trimmed) return "U";
-  return trimmed.charAt(0).toUpperCase();
-}
 
 export function AccountForm({ initial }: AccountFormProps) {
   const router = useRouter();
@@ -118,16 +113,12 @@ export function AccountForm({ initial }: AccountFormProps) {
               className="relative flex h-20 w-20 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full bg-brand text-2xl font-bold text-white"
               title="사진 변경"
             >
-              {avatarPreview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarPreview}
-                  alt=""
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                userInitial(form.name)
-              )}
+              <UserAvatar
+                src={avatarPreview}
+                name={form.name}
+                size="lg"
+                className="h-full w-full"
+              />
               <span className="absolute inset-x-0 bottom-0 flex items-center justify-center bg-black/45 py-1">
                 <Camera className="h-3.5 w-3.5 text-white" />
               </span>

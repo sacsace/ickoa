@@ -13,6 +13,24 @@ const ALLOWED_AVATAR_TYPES = new Set([
   "image/webp",
   "image/gif",
 ]);
+const AVATAR_EXT_MIME: Record<string, string> = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+  gif: "image/gif",
+};
+
+function isUploadBlob(value: FormDataEntryValue | null): value is Blob {
+  return !!value && typeof value === "object" && "arrayBuffer" in value && (value as Blob).size > 0;
+}
+
+function resolveAvatarMime(file: Blob) {
+  if (file.type && ALLOWED_AVATAR_TYPES.has(file.type)) return file.type;
+  const name = "name" in file ? String((file as File).name ?? "") : "";
+  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  return AVATAR_EXT_MIME[ext] ?? "";
+}
 
 export async function updateSiteProfile(formData: FormData) {
   const session = await auth();
@@ -54,15 +72,17 @@ export async function updateSiteProfile(formData: FormData) {
   } = { name, email, phone, address, nameEn, company, jobTitle };
 
   const avatar = formData.get("avatar");
-  if (avatar instanceof File && avatar.size > 0) {
-    if (!ALLOWED_AVATAR_TYPES.has(avatar.type)) {
+  if (isUploadBlob(avatar)) {
+    const mimeType = resolveAvatarMime(avatar);
+    if (!mimeType || !ALLOWED_AVATAR_TYPES.has(mimeType)) {
       throw new Error("프로필 사진은 JPEG, PNG, WebP, GIF만 업로드할 수 있습니다.");
     }
     if (avatar.size > MAX_AVATAR_BYTES) {
       throw new Error("프로필 사진은 5MB 이하로 업로드해 주세요.");
     }
+    const filename = "name" in avatar ? String((avatar as File).name || "avatar.jpg") : "avatar.jpg";
     const buffer = Buffer.from(await avatar.arrayBuffer());
-    updateData.image = await uploadFile(buffer, avatar.name || "avatar.jpg", avatar.type);
+    updateData.image = await uploadFile(buffer, filename, mimeType);
   }
 
   if (newPassword.trim()) {

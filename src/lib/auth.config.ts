@@ -147,7 +147,7 @@ export const authConfig = {
         token.id = user.id;
         token.name = user.name;
         token.email = user.email;
-        token.picture = user.image;
+        token.picture = user.image || null;
         token.sessionKind =
           (user as { sessionKind?: "site" | "admin" }).sessionKind ??
           (account?.provider === "credentials" ? "site" : "site");
@@ -163,7 +163,7 @@ export const authConfig = {
           token.name = dbUser.name;
           token.email = dbUser.email;
           token.role = dbUser.role;
-          token.picture = dbUser.image;
+          token.picture = dbUser.image || null;
         }
       }
 
@@ -177,7 +177,7 @@ export const authConfig = {
           token.name = dbUser.name;
           token.email = dbUser.email;
           token.role = dbUser.role;
-          token.picture = dbUser.image;
+          token.picture = dbUser.image || null;
         }
       }
 
@@ -189,8 +189,8 @@ export const authConfig = {
         session.user.name = (token.name as string | null | undefined) ?? session.user.name;
         session.user.email =
           (token.email as string | null | undefined) ?? session.user.email;
-        session.user.image =
-          (token.picture as string | null | undefined) ?? session.user.image;
+        const picture = (token.picture as string | null | undefined)?.trim();
+        session.user.image = picture || null;
         session.user.role = (token.role as string) ?? "MEMBER";
         session.sessionKind =
           (token.sessionKind as "site" | "admin" | undefined) ?? "site";

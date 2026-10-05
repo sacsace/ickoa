@@ -38,6 +38,7 @@ model User {
   notifications Notification[]
   eventRegs     EventRegistration[]
   clubMembers   ClubMember[]
+  clubRequests  ClubRequest[]
   donations     Donation[]
   createdEvents Event[]
   createdGuides Guide[]
@@ -213,6 +214,18 @@ model ClubMember {
   joinedAt  DateTime @default(now())
 
   @@unique([clubId, userId])
+}
+
+model ClubRequest {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  reason      String?
+  status      String    @default("PENDING")
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  reviewedAt  DateTime?
 }
 
 model GuideCategory {

@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -27,15 +26,9 @@ export async function GET(request: Request) {
   return NextResponse.json(businesses);
 }
 
-export async function POST(request: Request) {
-  const session = await auth();
-  if (!session?.user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const body = await request.json();
-  const business = await prisma.business.create({
-    data: { ...body, ownerId: session.user.id },
-  });
-  return NextResponse.json(business, { status: 201 });
+export async function POST() {
+  return NextResponse.json(
+    { error: "관리자 화면에서 등록해 주세요." },
+    { status: 405 },
+  );
 }
