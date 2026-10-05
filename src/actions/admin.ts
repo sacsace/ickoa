@@ -29,10 +29,58 @@ export async function createNews(data: {
   image?: string;
 }) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
-  const news = await prisma.news.create({ data });
+  const title = data.title.trim();
+  const content = data.content.trim();
+  if (!title || !content) throw new Error("제목과 내용을 입력해 주세요.");
+
+  const news = await prisma.news.create({
+    data: {
+      title,
+      content,
+      category: data.category.trim() || "일반",
+      region: data.region.trim() || "Chennai",
+      image: data.image?.trim() || null,
+    },
+  });
   revalidatePath("/news");
   revalidatePath("/");
   revalidatePath("/admin/news");
+  return news;
+}
+
+export async function updateNews(
+  id: string,
+  data: {
+    title: string;
+    content: string;
+    category: string;
+    region: string;
+    image?: string;
+  },
+) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
+  const existing = await prisma.news.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
+  const title = data.title.trim();
+  const content = data.content.trim();
+  if (!title || !content) throw new Error("제목과 내용을 입력해 주세요.");
+
+  const news = await prisma.news.update({
+    where: { id },
+    data: {
+      title,
+      content,
+      category: data.category.trim() || "일반",
+      region: data.region.trim() || "Chennai",
+      image: data.image?.trim() || null,
+    },
+  });
+  revalidatePath("/news");
+  revalidatePath("/");
+  revalidatePath("/admin/news");
+  revalidatePath(`/admin/news/${id}`);
+  revalidatePath(`/news/${id}`);
   return news;
 }
 
@@ -55,9 +103,73 @@ export async function createEvent(data: {
   maxAttendees: number;
 }) {
   await requireAdmin(["SUPER_ADMIN", "EVENT_ADMIN"]);
-  const event = await prisma.event.create({ data });
+  const title = data.title.trim();
+  const description = data.description.trim();
+  const location = data.location.trim();
+  if (!title || !description || !location) {
+    throw new Error("제목, 설명, 장소를 입력해 주세요.");
+  }
+  if (!(data.date instanceof Date) || Number.isNaN(data.date.getTime())) {
+    throw new Error("올바른 일시를 입력해 주세요.");
+  }
+
+  const event = await prisma.event.create({
+    data: {
+      title,
+      description,
+      location,
+      date: data.date,
+      image: data.image?.trim() || null,
+      maxAttendees: Math.max(1, Number(data.maxAttendees) || 50),
+    },
+  });
   revalidatePath("/events");
+  revalidatePath("/");
   revalidatePath("/admin/events");
+  return event;
+}
+
+export async function updateEvent(
+  id: string,
+  data: {
+    title: string;
+    description: string;
+    date: Date;
+    location: string;
+    image?: string;
+    maxAttendees: number;
+  },
+) {
+  await requireAdmin(["SUPER_ADMIN", "EVENT_ADMIN"]);
+  const existing = await prisma.event.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
+  const title = data.title.trim();
+  const description = data.description.trim();
+  const location = data.location.trim();
+  if (!title || !description || !location) {
+    throw new Error("제목, 설명, 장소를 입력해 주세요.");
+  }
+  if (!(data.date instanceof Date) || Number.isNaN(data.date.getTime())) {
+    throw new Error("올바른 일시를 입력해 주세요.");
+  }
+
+  const event = await prisma.event.update({
+    where: { id },
+    data: {
+      title,
+      description,
+      location,
+      date: data.date,
+      image: data.image?.trim() || null,
+      maxAttendees: Math.max(1, Number(data.maxAttendees) || 50),
+    },
+  });
+  revalidatePath("/events");
+  revalidatePath("/");
+  revalidatePath("/admin/events");
+  revalidatePath(`/admin/events/${id}`);
+  revalidatePath(`/events/${id}`);
   return event;
 }
 

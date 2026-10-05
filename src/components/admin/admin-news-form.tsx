@@ -4,50 +4,70 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
-import { createNews } from "@/actions/admin";
+import { createNews, updateNews } from "@/actions/admin";
 
-export function AdminNewsForm() {
+type NewsFormProps = {
+  initial?: {
+    id: string;
+    title: string;
+    content: string;
+    category: string;
+    region: string;
+    image: string | null;
+  };
+};
+
+export function AdminNewsForm({ initial }: NewsFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
-    title: "",
-    content: "",
-    category: "경제",
-    region: "Chennai",
+    title: initial?.title ?? "",
+    content: initial?.content ?? "",
+    category: initial?.category ?? "경제",
+    region: initial?.region ?? "Chennai",
+    image: initial?.image ?? "",
   });
 
-  function handleCreate(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const payload = {
+      title: form.title,
+      content: form.content,
+      category: form.category,
+      region: form.region,
+      image: form.image || undefined,
+    };
     startTransition(async () => {
       try {
-        const news = await createNews(form);
-        router.push(`/admin/news/${news.id}`);
+        if (initial) {
+          await updateNews(initial.id, payload);
+          router.push("/admin/news");
+        } else {
+          const news = await createNews(payload);
+          router.push(`/admin/news/${news.id}`);
+        }
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "등록에 실패했습니다.");
+        setError(err instanceof Error ? err.message : "저장에 실패했습니다.");
       }
     });
   }
 
   return (
     <>
-      <AdminPageHeader title="뉴스 등록" subtitle="새 뉴스 글을 작성합니다" />
+      <AdminPageHeader
+        title={initial ? "뉴스 수정" : "뉴스 등록"}
+        subtitle={initial ? "뉴스 내용을 수정합니다" : "새 뉴스 글을 작성합니다"}
+      />
+      <AdminBackLink href="/admin/news" />
 
-      <div className="mb-4">
-        <Link
-          href="/admin/news"
-          className="text-sm text-muted-foreground hover:text-foreground hover:underline"
-        >
-          ← 목록으로
-        </Link>
-      </div>
-
-      <form onSubmit={handleCreate} className="space-y-4 border border-border p-4">
+      <form onSubmit={handleSubmit} className="space-y-4 border border-border p-4">
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">제목</label>
+          <label className="mb-1 block text-xs text-muted-foreground">제목 *</label>
           <input
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -57,7 +77,7 @@ export function AdminNewsForm() {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">내용</label>
+          <label className="mb-1 block text-xs text-muted-foreground">내용 *</label>
           <textarea
             value={form.content}
             onChange={(e) => setForm({ ...form, content: e.target.value })}
@@ -86,17 +106,34 @@ export function AdminNewsForm() {
           </div>
         </div>
 
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">이미지 URL</label>
+          <input
+            value={form.image}
+            onChange={(e) => setForm({ ...form, image: e.target.value })}
+            className="h-11 w-full border border-border bg-background px-4 text-sm"
+            placeholder="https://... 또는 /image/..."
+          />
+        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button type="submit" size="sm" disabled={isPending}>
-            {isPending ? "등록 중..." : "등록"}
+            {isPending ? "저장 중..." : initial ? "수정" : "등록"}
           </Button>
           <Link href="/admin/news">
             <Button type="button" size="sm" variant="outline">
               취소
             </Button>
           </Link>
+          {initial ? (
+            <Link href={`/news/${initial.id}`} target="_blank">
+              <Button type="button" size="sm" variant="outline">
+                사이트에서 보기
+              </Button>
+            </Link>
+          ) : null}
         </div>
       </form>
     </>

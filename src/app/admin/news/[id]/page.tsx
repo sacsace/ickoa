@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { AdminNewsDetail } from "@/components/admin/admin-news-detail";
+import { AdminNewsForm } from "@/components/admin/admin-news-form";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminNewsDetailPage({
+export default async function AdminNewsEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -13,5 +13,16 @@ export default async function AdminNewsDetailPage({
   const news = await prisma.news.findUnique({ where: { id } });
   if (!news) notFound();
 
-  return <AdminNewsDetail news={news} />;
+  return (
+    <AdminNewsForm
+      initial={{
+        id: news.id,
+        title: news.title,
+        content: news.content,
+        category: news.category,
+        region: news.region,
+        image: news.image,
+      }}
+    />
+  );
 }

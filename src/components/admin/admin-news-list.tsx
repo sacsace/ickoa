@@ -50,7 +50,7 @@ export function AdminNewsList({ news }: { news: NewsItem[] }) {
       </div>
 
       <div className="overflow-x-auto border border-border">
-        <table className="w-full min-w-[640px] border-collapse text-sm">
+        <table className="w-full min-w-[720px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
               <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">
@@ -66,7 +66,7 @@ export function AdminNewsList({ news }: { news: NewsItem[] }) {
               <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">
                 등록일
               </th>
-              <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">
+              <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">
                 관리
               </th>
             </tr>
@@ -91,14 +91,22 @@ export function AdminNewsList({ news }: { news: NewsItem[] }) {
                   {formatDate(item.createdAt)}
                 </td>
                 <td className="px-3 py-3 text-center">
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => setDeleteTarget(item)}
-                    className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
-                  >
-                    삭제
-                  </button>
+                  <div className="inline-flex items-center gap-2">
+                    <Link
+                      href={`/admin/news/${item.id}`}
+                      className="text-xs text-brand hover:underline"
+                    >
+                      수정
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => setDeleteTarget(item)}
+                      className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}

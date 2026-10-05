@@ -99,6 +99,7 @@ export function Header() {
               type="search"
               placeholder="뉴스, 행사, 생활정보 검색"
               className="h-11 w-full bg-transparent px-3 text-sm outline-none"
+              suppressHydrationWarning
             />
             <button
               type="submit"

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
@@ -31,6 +31,7 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [photoCaption, setPhotoCaption] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ id: string; caption: string } | null>(null);
 
   function handleAddPhoto() {
@@ -44,6 +45,7 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
         await addGalleryPhoto(fd);
         setPhotoCaption("");
         setPhotoFile(null);
+        if (photoInputRef.current) photoInputRef.current.value = "";
         router.refresh();
       } catch (err) {
         setError(err instanceof Error ? err.message : "사진 추가 실패");
@@ -77,7 +79,13 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
         <h3 className="mb-3 text-sm font-medium">사진 추가</h3>
         <div className="flex flex-wrap gap-2">
           <input value={photoCaption} onChange={(e) => setPhotoCaption(e.target.value)} placeholder="사진 설명" className="h-9 min-w-[160px] flex-1 border border-border bg-background px-3 text-sm" />
-          <input type="file" accept="image/*" onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)} className="text-sm" />
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/*"
+            onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+            className="text-sm"
+          />
           <Button type="button" size="sm" disabled={isPending || !photoFile} onClick={handleAddPhoto}>추가</Button>
         </div>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}

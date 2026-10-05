@@ -40,7 +40,7 @@ export function AdminEventsList({ events }: { events: EventItem[] }) {
               <th className="w-36 px-3 py-2.5 text-center font-medium text-muted-foreground">일시</th>
               <th className="w-32 px-3 py-2.5 text-center font-medium text-muted-foreground">장소</th>
               <th className="w-24 px-3 py-2.5 text-center font-medium text-muted-foreground">신청</th>
-              <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">관리</th>
+              <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">관리</th>
             </tr>
           </thead>
           <tbody>
@@ -58,14 +58,22 @@ export function AdminEventsList({ events }: { events: EventItem[] }) {
                   {item._count.registrations}/{item.maxAttendees}
                 </td>
                 <td className="px-3 py-3 text-center">
-                  <button
-                    type="button"
-                    disabled={isPending}
-                    onClick={() => setDeleteTarget(item)}
-                    className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
-                  >
-                    삭제
-                  </button>
+                  <div className="inline-flex items-center gap-2">
+                    <Link
+                      href={`/admin/events/${item.id}`}
+                      className="text-xs text-brand hover:underline"
+                    >
+                      수정
+                    </Link>
+                    <button
+                      type="button"
+                      disabled={isPending}
+                      onClick={() => setDeleteTarget(item)}
+                      className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
