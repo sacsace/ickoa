@@ -59,20 +59,20 @@ export default async function AboutSubPage({
     return (
       <>
         <PageHeader title="정관" backHref="/about" />
-        <div className="mx-auto max-w-3xl px-4 py-12 md:px-6">
+        <div className="mx-auto w-full max-w-[1356px] px-4 py-8 md:px-6 md:py-10">
           {docs.length === 0 ? (
             <p className="text-muted-foreground">등록된 정관이 없습니다.</p>
           ) : (
-            <div className="divide-y divide-border border border-border">
+            <div className="divide-y divide-border border border-border bg-card">
               {docs.map((doc) => (
-                <details key={doc.id} className="group open:bg-muted/20" open={docs.length === 1}>
-                  <summary className="cursor-pointer list-none px-4 py-3 text-sm font-bold hover:bg-muted/30 [&::-webkit-details-marker]:hidden">
+                <details key={doc.id} className="group open:bg-muted/10" open={docs.length === 1}>
+                  <summary className="cursor-pointer list-none px-5 py-4 text-base font-bold hover:bg-muted/30 md:px-8 [&::-webkit-details-marker]:hidden">
                     {doc.title}
                   </summary>
-                  <div className="border-t border-border px-4 py-4">
-                    <p className="whitespace-pre-wrap leading-relaxed text-foreground">
+                  <div className="border-t border-border px-5 py-6 md:px-8 md:py-8">
+                    <div className="whitespace-pre-wrap text-[15px] leading-[1.85] text-foreground md:text-base">
                       {doc.content}
-                    </p>
+                    </div>
                   </div>
                 </details>
               ))}
