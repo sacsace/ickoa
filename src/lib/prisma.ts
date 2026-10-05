@@ -1,6 +1,8 @@
 import { PrismaClient } from "@prisma/client";
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined };
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+};
 
 function createPrismaClient() {
   return new PrismaClient({
@@ -9,10 +11,10 @@ function createPrismaClient() {
 }
 
 function getPrismaClient() {
-  const cached = globalForPrisma.prisma;
-  // Dev HMR can keep a PrismaClient generated before schema changes (e.g. PageView).
-  if (cached && !("pageView" in cached)) {
-    void cached.$disconnect().catch(() => undefined);
+  const cached = globalForPrisma.prisma as PrismaClient | undefined;
+  // Dev HMR can keep a PrismaClient generated before schema changes.
+  if (cached && !("pageView" in (cached as object))) {
+    void (cached as PrismaClient).$disconnect().catch(() => undefined);
     globalForPrisma.prisma = undefined;
     return createPrismaClient();
   }
