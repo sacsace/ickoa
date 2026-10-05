@@ -414,7 +414,7 @@ export function PortalHome({
                 </div>
                 <div>
                   <p className="text-muted-foreground">교민</p>
-                  <p className="font-bold text-brand">2,500+</p>
+                  <p className="font-bold text-brand">500+</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">동호회</p>

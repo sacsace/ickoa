@@ -36,11 +36,11 @@ export default function AboutPage() {
               <p className="text-xs text-muted-foreground">Years</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">2,500+</p>
+              <p className="text-2xl font-bold text-foreground">500+</p>
               <p className="text-xs text-muted-foreground">Members</p>
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">150+</p>
+              <p className="text-2xl font-bold text-foreground">280+</p>
               <p className="text-xs text-muted-foreground">Companies</p>
             </div>
           </div>

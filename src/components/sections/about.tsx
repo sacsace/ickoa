@@ -39,7 +39,7 @@ export function AboutSection() {
                 </div>
                 <div>
                   <dt className="text-muted-foreground">교민</dt>
-                  <dd className="mt-1 font-display text-xl font-semibold">2,500+</dd>
+                  <dd className="mt-1 font-display text-xl font-semibold">500+</dd>
                 </div>
                 <div>
                   <dt className="text-muted-foreground">동호회</dt>

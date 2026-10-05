@@ -11,6 +11,7 @@ export default function AdminLoginForm() {
   const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
   const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -51,21 +52,29 @@ export default function AdminLoginForm() {
             value={loginId}
             onChange={(e) => setLoginId(e.target.value)}
             className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground/30"
-            placeholder="root"
-            autoComplete="username"
+            autoComplete="off"
             required
           />
         </div>
         <div>
           <label className="mb-1 block text-sm">비밀번호</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground/30"
-            autoComplete="current-password"
-            required
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="h-10 w-full border border-border bg-background px-3 pr-16 text-sm outline-none focus:border-foreground/30"
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute inset-y-0 right-0 px-3 text-xs text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? "숨김" : "보기"}
+            </button>
+          </div>
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}
         <button
