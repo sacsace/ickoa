@@ -100,10 +100,10 @@ export default async function AboutSubPage({
                 return (
                   <li
                     key={entry.id}
-                    className="relative grid gap-3 pb-8 last:pb-0 md:grid-cols-[220px_minmax(0,1fr)] md:gap-8 md:pb-10"
+                    className="relative grid gap-3 pb-8 last:pb-0 md:grid-cols-[minmax(280px,max-content)_minmax(0,1fr)] md:gap-8 md:pb-10"
                   >
                     <div className="md:pt-1 md:text-right">
-                      <p className="whitespace-pre-line text-sm font-bold leading-snug text-brand md:text-[15px]">
+                      <p className="whitespace-nowrap text-sm font-bold leading-snug text-brand md:text-[15px]">
                         {entry.year}
                       </p>
                     </div>
