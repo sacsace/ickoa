@@ -23,8 +23,7 @@ ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV UPLOAD_ROOT=/data
 RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/* \
-  && mkdir -p /data/uploads /data/magazine /data/gallery /data/hero \
-  && chown -R node:node /data
+  && mkdir -p /data
 
 COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/node_modules ./node_modules
@@ -34,10 +33,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/next.config.ts ./next.config.ts
 
-RUN chmod +x ./scripts/railway-start.sh \
-  && chown -R node:node /app
+RUN chmod +x ./scripts/railway-start.sh
 
-USER node
+# Run as root so Railway volume at /data is writable, then start app
 EXPOSE 3700
-# Persistent uploads use Railway Volume mounted at /data (not Docker VOLUME)
 CMD ["./scripts/railway-start.sh"]
