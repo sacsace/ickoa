@@ -27,7 +27,7 @@ function getUploadRoot() {
     process.env.UPLOAD_ROOT?.trim() ||
     process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
   if (fromEnv) return fromEnv;
-  return path.join(process.cwd(), "public");
+  return path.join(/* turbopackIgnore: true */ process.cwd(), "public");
 }
 
 async function writeLocalFile(

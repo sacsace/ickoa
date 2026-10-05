@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/seo";
 import { mainNavigation } from "@/data/navigation";
 
+export const dynamic = "force-dynamic";
+
 const ABOUT_SLUGS = ["history", "leadership", "bylaws", "reports", "finance", "sponsors"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
