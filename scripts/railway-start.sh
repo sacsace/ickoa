@@ -25,5 +25,8 @@ fi
 echo "Syncing database schema..."
 npx prisma db push --skip-generate
 
+echo "Seeding database (idempotent upserts)..."
+npx tsx prisma/seed.ts || echo "Seed skipped or failed (continuing)"
+
 echo "Starting Next.js..."
 exec npx next start -H 0.0.0.0 -p "${PORT:-3700}"
