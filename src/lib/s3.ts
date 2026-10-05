@@ -21,12 +21,35 @@ const s3 = s3Configured
     })
   : null;
 
+/** Railway 볼륨(/data) 또는 로컬 public 디렉터리 */
+function getUploadRoot() {
+  const fromEnv =
+    process.env.UPLOAD_ROOT?.trim() ||
+    process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
+  if (fromEnv) return fromEnv;
+  return path.join(process.cwd(), "public");
+}
+
+async function writeLocalFile(
+  folder: string,
+  filename: string,
+  buffer: Buffer,
+): Promise<string> {
+  const safeName = filename.replace(/[^\w.\-()]/g, "_");
+  const localName = `${Date.now()}-${safeName}`;
+  const uploadDir = path.join(getUploadRoot(), folder);
+  await mkdir(uploadDir, { recursive: true });
+  await writeFile(path.join(uploadDir, localName), buffer);
+  return `/${folder}/${localName}`;
+}
+
 export async function uploadFile(
   buffer: Buffer,
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  const key = `uploads/${Date.now()}-${filename}`;
+  const safeName = filename.replace(/[^\w.\-()]/g, "_");
+  const key = `uploads/${Date.now()}-${safeName}`;
 
   if (s3) {
     await s3.send(
@@ -40,11 +63,7 @@ export async function uploadFile(
     return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION ?? "ap-south-1"}.amazonaws.com/${key}`;
   }
 
-  const uploadDir = path.join(process.cwd(), "public", "uploads");
-  await mkdir(uploadDir, { recursive: true });
-  const localName = `${Date.now()}-${filename}`;
-  await writeFile(path.join(uploadDir, localName), buffer);
-  return `/uploads/${localName}`;
+  return writeLocalFile("uploads", filename, buffer);
 }
 
 export async function uploadMagazineFile(
@@ -52,7 +71,7 @@ export async function uploadMagazineFile(
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  return uploadToFolder(buffer, filename, mimeType, "magazine", "/magazine");
+  return uploadToFolder(buffer, filename, mimeType, "magazine");
 }
 
 export async function uploadHeroFile(
@@ -60,7 +79,7 @@ export async function uploadHeroFile(
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  return uploadToFolder(buffer, filename, mimeType, "hero", "/hero");
+  return uploadToFolder(buffer, filename, mimeType, "hero");
 }
 
 export async function uploadGalleryFile(
@@ -68,7 +87,7 @@ export async function uploadGalleryFile(
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  return uploadToFolder(buffer, filename, mimeType, "gallery", "/gallery");
+  return uploadToFolder(buffer, filename, mimeType, "gallery");
 }
 
 async function uploadToFolder(
@@ -76,7 +95,6 @@ async function uploadToFolder(
   filename: string,
   mimeType: string,
   folder: string,
-  publicPrefix: string,
 ): Promise<string> {
   const safeName = filename.replace(/[^\w.\-()]/g, "_");
   const key = `${folder}/${Date.now()}-${safeName}`;
@@ -93,11 +111,7 @@ async function uploadToFolder(
     return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION ?? "ap-south-1"}.amazonaws.com/${key}`;
   }
 
-  const uploadDir = path.join(process.cwd(), "public", folder);
-  await mkdir(uploadDir, { recursive: true });
-  const localName = `${Date.now()}-${safeName}`;
-  await writeFile(path.join(uploadDir, localName), buffer);
-  return `${publicPrefix}/${localName}`;
+  return writeLocalFile(folder, filename, buffer);
 }
 
 export async function deleteFile(url: string) {
@@ -116,4 +130,8 @@ export async function deleteFile(url: string) {
 
 export function isS3Enabled() {
   return !!s3Configured;
+}
+
+export function getUploadRootPath() {
+  return getUploadRoot();
 }

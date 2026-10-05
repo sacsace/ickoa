@@ -6,6 +6,7 @@
     "dev": "next dev -p 3700",
     "build": "prisma generate && next build",
     "start": "next start -p 3700",
+    "start:railway": "sh ./scripts/railway-start.sh",
     "lint": "eslint",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
