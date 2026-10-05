@@ -37,5 +37,5 @@ RUN chmod +x ./scripts/railway-start.sh \
 
 USER node
 EXPOSE 3700
-VOLUME ["/data"]
+# Persistent uploads use Railway Volume mounted at /data (not Docker VOLUME)
 CMD ["./scripts/railway-start.sh"]
