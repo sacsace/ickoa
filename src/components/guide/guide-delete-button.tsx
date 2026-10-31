@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
+import { useAlert } from "@/components/providers/alert-provider";
 import { deleteSiteGuide } from "@/actions/guides";
 import { guideListPath } from "@/data/guide";
 
@@ -19,6 +20,7 @@ export function GuideDeleteButton({
   categorySlug?: string | null;
 }) {
   const router = useRouter();
+  const alert = useAlert();
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
@@ -50,8 +52,12 @@ export function GuideDeleteButton({
               );
               router.refresh();
             } catch {
-              alert("삭제 권한이 없거나 로그인 상태가 아닙니다.");
               setOpen(false);
+              await alert({
+                title: "삭제 실패",
+                message: "삭제 권한이 없거나 로그인 상태가 아닙니다.",
+                variant: "error",
+              });
             }
           });
         }}

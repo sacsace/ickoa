@@ -9,6 +9,7 @@ import {
   inrToPaise,
   isRazorpayConfigured,
 } from "@/lib/razorpay";
+import { adminHasRole } from "@/lib/session-kind";
 
 const MIN_INR = 100;
 const MAX_INR = 500_000;
@@ -123,7 +124,7 @@ function donEmailTrim(email: string) {
 
 export async function getDonationsAdmin() {
   const session = await auth();
-  if (!session?.user || !["SUPER_ADMIN", "CONTENT_ADMIN"].includes(session.user.role)) {
+  if (!adminHasRole(session, ["SUPER_ADMIN", "CONTENT_ADMIN"])) {
     throw new Error("Unauthorized");
   }
 

@@ -17,10 +17,11 @@ export function BusinessSearch({ categories }: { categories: string[] }) {
     router.push(`/business?${params.toString()}`);
   }
 
-  function filterCategory(cat: string) {
+  const activeCategory = searchParams.get("category");
+
+  function filterCategory(cat: string | null) {
     const params = new URLSearchParams(searchParams);
-    const current = params.get("category");
-    if (current === cat) params.delete("category");
+    if (!cat) params.delete("category");
     else params.set("category", cat);
     router.push(`/business?${params.toString()}`);
   }
@@ -38,24 +39,33 @@ export function BusinessSearch({ categories }: { categories: string[] }) {
           suppressHydrationWarning
         />
       </form>
-      {categories.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => filterCategory(cat)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                searchParams.get("category") === cat
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => filterCategory(null)}
+          className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+            !activeCategory
+              ? "bg-foreground text-background"
+              : "bg-muted text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          전체
+        </button>
+        {categories.map((cat) => (
+          <button
+            key={cat}
+            type="button"
+            onClick={() => filterCategory(cat)}
+            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              activeCategory === cat
+                ? "bg-foreground text-background"
+                : "bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {cat}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }

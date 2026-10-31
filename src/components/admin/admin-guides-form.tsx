@@ -6,7 +6,9 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createGuide } from "@/actions/admin";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 type CategoryOption = { id: string; name: string };
 
@@ -24,6 +26,10 @@ export function AdminGuidesForm({ categories }: { categories: CategoryOption[] }
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!form.title.trim() || !plainTextFromHtml(form.content)) {
+      setError("제목과 내용을 입력해 주세요.");
+      return;
+    }
     startTransition(async () => {
       try {
         const guide = await createGuide(form);
@@ -51,12 +57,11 @@ export function AdminGuidesForm({ categories }: { categories: CategoryOption[] }
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">내용</label>
-          <textarea
+          <ContentEditor
             value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={12}
-            className="w-full border border-border bg-background px-4 py-3 text-sm"
-            required
+            onChange={(content) => setForm({ ...form, content })}
+            placeholder="가이드 내용을 입력하세요"
+            minHeight={320}
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

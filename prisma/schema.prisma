@@ -39,6 +39,8 @@ model User {
   eventRegs     EventRegistration[]
   clubMembers   ClubMember[]
   clubRequests  ClubRequest[]
+  ledClubs      Club[]           @relation("ClubLeader")
+  clubNotices   ClubNotice[]
   donations     Donation[]
   createdEvents Event[]
   createdGuides Guide[]
@@ -199,6 +201,9 @@ model Event {
   description   String
   date          DateTime
   location      String
+  mapsUrl       String?
+  lat           Float?
+  lng           Float?
   image         String?
   maxAttendees  Int
   createdById   String?
@@ -228,7 +233,11 @@ model Club {
   description String?
   icon        String?
   order       Int          @default(0)
+  /// 동호회 그룹장
+  leaderId    String?
+  leader      User?        @relation("ClubLeader", fields: [leaderId], references: [id], onDelete: SetNull)
   members     ClubMember[]
+  notices     ClubNotice[]
   createdAt   DateTime     @default(now())
 }
 
@@ -236,12 +245,28 @@ model ClubMember {
   id        String   @id @default(cuid())
   clubId    String
   userId    String
+  /// leader | member
   role      String   @default("member")
+  /// PENDING | APPROVED | REJECTED
+  status    String   @default("PENDING")
   club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   joinedAt  DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@unique([clubId, userId])
+}
+
+model ClubNotice {
+  id        String   @id @default(cuid())
+  clubId    String
+  title     String
+  content   String
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  club      Club     @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model ClubRequest {
@@ -479,4 +504,34 @@ model LeadershipMember {
   published Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// 사이트 SMTP / 문의 메일 설정 (단일 행)
+model MailSetting {
+  id           String   @id @default("default")
+  enabled      Boolean  @default(false)
+  host         String   @default("")
+  port         Int      @default(587)
+  secure       Boolean  @default(false)
+  username     String   @default("")
+  password     String   @default("")
+  fromEmail    String   @default("")
+  fromName     String   @default("")
+  replyTo      String   @default("")
+  /// 푸터 등 공개 문의 메일
+  contactEmail String   @default("edit@ickoa.org")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// 문의하기 접수 내역
+model ContactInquiry {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  mailed    Boolean  @default(false)
+  createdAt DateTime @default(now())
 }

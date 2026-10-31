@@ -6,7 +6,9 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createActivityReport, updateActivityReport } from "@/actions/about";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 type ReportFormProps = {
   initial?: {
@@ -36,6 +38,10 @@ export function AdminActivityReportForm({ initial }: ReportFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!form.title.trim() || !plainTextFromHtml(form.content)) {
+      setError("제목과 내용을 입력해 주세요.");
+      return;
+    }
     const yearNum = form.year.trim() ? Number(form.year) : null;
     const payload = {
       title: form.title,
@@ -107,12 +113,11 @@ export function AdminActivityReportForm({ initial }: ReportFormProps) {
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">내용 *</label>
-          <textarea
+          <ContentEditor
             value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={12}
-            className="w-full border border-border bg-background px-4 py-3 text-sm"
-            required
+            onChange={(content) => setForm({ ...form, content })}
+            placeholder="보고서 내용을 입력하세요"
+            minHeight={320}
           />
         </div>
         <div>

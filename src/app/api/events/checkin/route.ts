@@ -1,13 +1,11 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { adminHasRole } from "@/lib/session-kind";
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (
-    !session?.user ||
-    !["SUPER_ADMIN", "EVENT_ADMIN"].includes(session.user.role)
-  ) {
+  if (!adminHasRole(session, ["SUPER_ADMIN", "EVENT_ADMIN"])) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

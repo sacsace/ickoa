@@ -14,6 +14,7 @@ import {
   adminListRowNumber,
   useAdminList,
 } from "@/components/admin/admin-list-controls";
+import { Button } from "@/components/ui/button";
 import { deletePost } from "@/actions/admin";
 
 type PostItem = {
@@ -48,6 +49,13 @@ export function AdminPostsList({ posts }: { posts: PostItem[] }) {
         filteredCount={list.filteredCount}
         totalCount={list.totalCount}
         searchPlaceholder="제목, 게시판, 작성자 검색..."
+        actions={
+          <Link href="/admin/boards">
+            <Button size="sm" variant="outline">
+              게시판 카테고리 관리
+            </Button>
+          </Link>
+        }
       />
       <AdminTableShell>
         <table className="w-full min-w-[640px] border-collapse text-sm">

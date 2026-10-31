@@ -5,6 +5,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { GUIDE_REGION, guideListPath } from "@/data/guide";
 import { plainTextFromHtml, sanitizePostHtml } from "@/lib/sanitize-html";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 
 async function resolveCategorySlug(categoryName: string) {
   const cat = await prisma.guideCategory.findFirst({
@@ -35,8 +37,12 @@ async function revalidateGuides(category?: string, guideId?: string) {
 
 async function requireSiteUser() {
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Unauthorized");
-  return session;
+  const site = getSiteUser(session);
+  if (!site) throw new Error("Unauthorized");
+  return {
+    ...session!,
+    user: { ...session!.user, ...site, id: site.id },
+  };
 }
 
 async function requireGuideCategory(categoryName: string) {
@@ -92,7 +98,9 @@ export async function updateSiteGuide(
   const session = await requireSiteUser();
   const existing = await prisma.guide.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
-  if (existing.createdById !== session.user.id) throw new Error("Forbidden");
+  if (!canManageSiteResource(session.user, existing.createdById)) {
+    throw new Error("Forbidden");
+  }
 
   const title = data.title.trim();
   const content = sanitizePostHtml(data.content.trim());
@@ -119,7 +127,9 @@ export async function deleteSiteGuide(id: string) {
   const session = await requireSiteUser();
   const existing = await prisma.guide.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
-  if (existing.createdById !== session.user.id) throw new Error("Forbidden");
+  if (!canManageSiteResource(session.user, existing.createdById)) {
+    throw new Error("Forbidden");
+  }
 
   await prisma.guide.delete({ where: { id } });
   await revalidateGuides(existing.category, id);

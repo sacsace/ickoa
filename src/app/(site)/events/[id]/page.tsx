@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -7,8 +6,19 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { EventRegisterButton } from "@/components/events/event-register-button";
 import { EventDeleteButton } from "@/components/events/event-delete-button";
+import { EventAttendees } from "@/components/events/event-attendees";
+import { EventLocationMap } from "@/components/events/event-location-map";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 import { createMetadata, truncateDescription } from "@/lib/seo";
 import { isEventEnded } from "@/lib/event-status";
+import { resolveMapsUrlCoords } from "@/lib/google-maps-url";
+import { EventCoverImage } from "@/components/events/event-cover-image";
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
+import {
+  eventCoverImage,
+  plainTextFromHtml,
+} from "@/lib/sanitize-html";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +34,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: event.title,
-    description: truncateDescription(event.description),
+    description: truncateDescription(plainTextFromHtml(event.description)),
     path: `/events/${id}`,
     image: event.image,
   });
@@ -36,30 +46,49 @@ export default async function EventDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [event, session] = await Promise.all([
-    prisma.event.findUnique({
-      where: { id },
-      include: { _count: { select: { registrations: true } } },
-    }),
-    auth(),
-  ]);
+  const session = await auth();
+  const siteUser = getSiteUser(session);
+
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: { _count: { select: { registrations: true } } },
+  });
   if (!event) notFound();
 
-  const canDelete =
-    !!session?.user?.id && event.createdById === session.user.id;
+  const canManage = canManageSiteResource(siteUser, event.createdById);
+  const attendees = canManage
+    ? await prisma.eventRegistration.findMany({
+        where: { eventId: id },
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          checkedIn: true,
+          createdAt: true,
+          user: {
+            select: { name: true, email: true, phone: true },
+          },
+        },
+      })
+    : [];
   const ended = isEventEnded(event.date);
+  const cover = eventCoverImage(event);
+  let mapLat = event.lat;
+  let mapLng = event.lng;
+  if ((mapLat == null || mapLng == null) && event.mapsUrl) {
+    const coords = await resolveMapsUrlCoords(event.mapsUrl);
+    mapLat = coords?.lat ?? null;
+    mapLng = coords?.lng ?? null;
+  }
 
   return (
     <>
       <PageHeader title={event.title} backHref="/events" />
       <div className="mx-auto max-w-[1356px] px-4 py-8 md:px-6">
-        {event.image ? (
+        {cover ? (
           <div className="relative mb-6 aspect-[16/9] max-h-[420px] overflow-hidden border border-border">
-            <Image
-              src={event.image}
+            <EventCoverImage
+              src={cover}
               alt={event.title}
-              fill
-              className="object-cover"
               sizes="(max-width: 1356px) 100vw, 1356px"
             />
             {ended ? (
@@ -88,8 +117,15 @@ export default async function EventDetailPage({
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {canDelete ? (
-              <EventDeleteButton eventId={event.id} title={event.title} />
+            {canManage ? (
+              <>
+                <Link href={`/events/${event.id}/edit`}>
+                  <Button type="button" variant="outline" size="sm">
+                    수정
+                  </Button>
+                </Link>
+                <EventDeleteButton eventId={event.id} title={event.title} />
+              </>
             ) : null}
             <Link href="/events">
               <Button type="button" variant="outline" size="sm">
@@ -100,12 +136,29 @@ export default async function EventDetailPage({
         </div>
 
         <div className="border border-border bg-card p-5 md:p-6">
-          <p className="whitespace-pre-wrap leading-relaxed">{event.description}</p>
+          <RichHtmlBody
+            content={event.description}
+            className="prose prose-sm max-w-none text-base [&_img]:my-4 [&_img]:object-contain"
+          />
         </div>
 
         <div className="mt-6 max-w-xs">
           <EventRegisterButton eventId={event.id} ended={ended} />
         </div>
+
+        <EventLocationMap
+          location={event.location}
+          mapsUrl={event.mapsUrl}
+          lat={mapLat}
+          lng={mapLng}
+        />
+
+        {canManage ? (
+          <EventAttendees
+            attendees={attendees}
+            maxAttendees={event.maxAttendees}
+          />
+        ) : null}
       </div>
     </>
   );

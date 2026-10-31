@@ -16,6 +16,7 @@ const aboutPages = [
   { href: "/about/finance", title: "재무 공개", description: "재정 운영 투명성 공개" },
   { href: "/about/sponsors", title: "후원사", description: "한인회 후원 기업 및 단체" },
   { href: "/about/ci", title: "CI", description: "로고 및 브랜드 아이덴티티 가이드" },
+  { href: "/contact", title: "문의하기", description: "한인회 운영 및 생활 정보 문의" },
 ];
 
 export default function AboutPage() {

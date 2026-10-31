@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { isAdminSession } from "@/lib/session-kind";
+import { getAdminUser, isAdminSession } from "@/lib/session-kind";
+import { signOutAdmin } from "@/lib/portal-signout";
 
 type NavItem = {
   href: string;
@@ -34,13 +35,7 @@ const sections: NavSection[] = [
   },
   {
     title: "갤러리",
-    items: [
-      {
-        href: "/admin/gallery",
-        label: "앨범",
-        children: [{ href: "/admin/gallery/categories", label: "카테고리" }],
-      },
-    ],
+    items: [{ href: "/admin/gallery", label: "앨범" }],
   },
   {
     title: "소식·행사",
@@ -52,13 +47,7 @@ const sections: NavSection[] = [
   },
   {
     title: "생활 가이드",
-    items: [
-      {
-        href: "/admin/guides",
-        label: "가이드",
-        children: [{ href: "/admin/guides/categories", label: "카테고리" }],
-      },
-    ],
+    items: [{ href: "/admin/guides", label: "가이드" }],
   },
   {
     title: "한인회",
@@ -66,21 +55,13 @@ const sections: NavSection[] = [
   },
   {
     title: "한인 기업",
-    items: [
-      {
-        href: "/admin/businesses",
-        label: "디렉토리",
-        children: [{ href: "/admin/businesses/categories", label: "업종" }],
-      },
-    ],
+    items: [{ href: "/admin/businesses", label: "디렉토리" }],
   },
   {
     title: "커뮤니티",
     items: [
       { href: "/admin/posts", label: "게시글" },
-      { href: "/admin/boards", label: "게시판 카테고리" },
       { href: "/admin/clubs", label: "동호회" },
-      { href: "/admin/club-requests", label: "동호회 등록 요청" },
     ],
   },
   {
@@ -95,6 +76,8 @@ const sections: NavSection[] = [
     items: [
       { href: "/admin/donations", label: "후원 내역" },
       { href: "/admin/checkin", label: "QR 체크인" },
+      { href: "/admin/inquiries", label: "문의 내역" },
+      { href: "/admin/mail", label: "메일 설정" },
     ],
   },
 ];
@@ -160,8 +143,9 @@ function NavLink({
 
 export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const adminSession = isAdminSession(session);
+  const adminUser = getAdminUser(session);
   const activeHref = resolveActiveHref(pathname, FLAT_NAV_HREFS);
 
   return (
@@ -186,11 +170,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             {adminSession && (
               <>
                 <span className="hidden text-[#d7e2ec] md:inline">
-                  {session!.user.name}
+                  {adminUser?.name}
                 </span>
                 <button
                   type="button"
-                  onClick={() => signOut({ callbackUrl: "/admin/login" })}
+                  onClick={() =>
+                    void signOutAdmin(update, { callbackUrl: "/admin/login" })
+                  }
                   className="text-[#d7e2ec] transition-colors hover:text-white"
                 >
                   로그아웃

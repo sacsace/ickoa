@@ -70,6 +70,11 @@ export function Footer() {
             <ul className="space-y-2 text-[13px] text-muted-foreground">
               <li>Chennai, Tamil Nadu, India</li>
               <li>edit@ickoa.org</li>
+              <li>
+                <Link href="/contact" className="hover:text-brand">
+                  문의하기
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

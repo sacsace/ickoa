@@ -4,6 +4,8 @@ import { BoardPostList } from "@/components/community/board-post-list";
 import { BoardTabs } from "@/components/community/board-tabs";
 import { getBoards, getPostsByBoard } from "@/lib/data";
 import { auth } from "@/lib/auth";
+import { getSiteUser } from "@/lib/session-kind";
+import { isSiteSuperuser } from "@/lib/site-permissions";
 import { createMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -38,6 +40,8 @@ export default async function BoardPage({
   ]);
   if (!board) notFound();
 
+  const siteUser = getSiteUser(session);
+
   return (
     <>
       <PageHeader title={board.name} backHref="/community" />
@@ -46,7 +50,8 @@ export default async function BoardPage({
         <BoardPostList
           boardSlug={slug}
           posts={board.posts}
-          currentUserId={session?.user?.id}
+          currentUserId={siteUser?.id}
+          manageAll={isSiteSuperuser(siteUser)}
         />
       </div>
     </>

@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Image from "next/image";
 import { PageHeader } from "@/components/ui/page-header";
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { prisma } from "@/lib/prisma";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 import { createMetadata, truncateDescription } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +20,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: news.title,
-    description: truncateDescription(news.content),
+    description: truncateDescription(plainTextFromHtml(news.content)),
     path: `/news/${id}`,
     image: news.image,
   });
@@ -48,11 +50,10 @@ export default async function NewsDetailPage({
             <Image src={news.image} alt={news.title} fill className="object-cover" />
           </div>
         )}
-        <div className="prose prose-neutral dark:prose-invert max-w-none">
-          <p className="whitespace-pre-wrap leading-relaxed text-foreground">
-            {news.content}
-          </p>
-        </div>
+        <RichHtmlBody
+          content={news.content}
+          className="prose prose-neutral max-w-none dark:prose-invert"
+        />
       </article>
     </>
   );

@@ -3,8 +3,11 @@
 import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
+import { slugifyClub } from "@/lib/clubs";
 import { prisma } from "@/lib/prisma";
 import { resolveMapsUrlCoords } from "@/lib/google-maps-url";
+import { firstImageSrcFromHtml } from "@/lib/sanitize-html";
+import { getAdminUser } from "@/lib/session-kind";
 import type { Role } from "@prisma/client";
 
 const ADMIN_ROLES: Role[] = [
@@ -16,10 +19,11 @@ const ADMIN_ROLES: Role[] = [
 
 async function requireAdmin(roles: Role[]) {
   const session = await auth();
-  if (!session?.user || !roles.includes(session.user.role as Role)) {
+  const admin = getAdminUser(session);
+  if (!admin || !roles.includes(admin.role as Role)) {
     throw new Error("Unauthorized");
   }
-  return session;
+  return { ...session!, user: { ...session!.user, ...admin, id: admin.id } };
 }
 
 export async function createNews(data: {
@@ -95,11 +99,18 @@ export async function deleteNews(id: string) {
   revalidatePath(`/news/${id}`);
 }
 
+function normalizeEventMapsUrl(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
+
 export async function createEvent(data: {
   title: string;
   description: string;
   date: Date;
   location: string;
+  mapsUrl?: string;
   image?: string;
   maxAttendees: number;
 }) {
@@ -107,6 +118,7 @@ export async function createEvent(data: {
   const title = data.title.trim();
   const description = data.description.trim();
   const location = data.location.trim();
+  const mapsUrl = normalizeEventMapsUrl(data.mapsUrl);
   if (!title || !description || !location) {
     throw new Error("제목, 설명, 장소를 입력해 주세요.");
   }
@@ -114,13 +126,20 @@ export async function createEvent(data: {
     throw new Error("올바른 일시를 입력해 주세요.");
   }
 
+  const coords = mapsUrl ? await resolveMapsUrlCoords(mapsUrl) : null;
+  const image =
+    data.image?.trim() || firstImageSrcFromHtml(description) || null;
+
   const event = await prisma.event.create({
     data: {
       title,
       description,
       location,
+      mapsUrl,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
       date: data.date,
-      image: data.image?.trim() || null,
+      image,
       maxAttendees: Math.max(1, Number(data.maxAttendees) || 50),
     },
   });
@@ -137,6 +156,7 @@ export async function updateEvent(
     description: string;
     date: Date;
     location: string;
+    mapsUrl?: string;
     image?: string;
     maxAttendees: number;
   },
@@ -148,6 +168,7 @@ export async function updateEvent(
   const title = data.title.trim();
   const description = data.description.trim();
   const location = data.location.trim();
+  const mapsUrl = normalizeEventMapsUrl(data.mapsUrl);
   if (!title || !description || !location) {
     throw new Error("제목, 설명, 장소를 입력해 주세요.");
   }
@@ -155,14 +176,21 @@ export async function updateEvent(
     throw new Error("올바른 일시를 입력해 주세요.");
   }
 
+  const coords = mapsUrl ? await resolveMapsUrlCoords(mapsUrl) : null;
+  const image =
+    data.image?.trim() || firstImageSrcFromHtml(description) || null;
+
   const event = await prisma.event.update({
     where: { id },
     data: {
       title,
       description,
       location,
+      mapsUrl,
+      lat: coords?.lat ?? null,
+      lng: coords?.lng ?? null,
       date: data.date,
-      image: data.image?.trim() || null,
+      image,
       maxAttendees: Math.max(1, Number(data.maxAttendees) || 50),
     },
   });
@@ -360,6 +388,7 @@ function slugifyTaxonomy(name: string) {
     .slice(0, 60);
 }
 
+
 export async function createGalleryCategory(data: {
   name: string;
   nameEn?: string;
@@ -511,20 +540,47 @@ export async function deleteBoard(id: string) {
   revalidatePath("/admin/boards");
 }
 
+async function resolveClubLeaderId(leaderEmail?: string | null) {
+  const email = leaderEmail?.trim().toLowerCase();
+  if (!email) return null;
+  const user = await prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+    select: { id: true },
+  });
+  if (!user) throw new Error("그룹장으로 지정할 회원을 찾을 수 없습니다. (이메일 확인)");
+  return user.id;
+}
+
+async function ensureClubLeaderMembership(clubId: string, leaderId: string) {
+  await prisma.clubMember.upsert({
+    where: { clubId_userId: { clubId, userId: leaderId } },
+    update: { role: "leader", status: "APPROVED" },
+    create: {
+      clubId,
+      userId: leaderId,
+      role: "leader",
+      status: "APPROVED",
+    },
+  });
+}
+
 export async function createClub(data: {
   name: string;
   slug?: string;
   description?: string;
   icon?: string;
   order?: number;
+  leaderEmail?: string;
 }) {
   await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
   const name = data.name.trim();
   if (!name) throw new Error("동호회 이름을 입력해 주세요.");
-  const slug = (data.slug?.trim() || slugifyTaxonomy(name) || `club-${Date.now()}`).slice(0, 60);
+  const slug = (data.slug?.trim() || slugifyClub(name)).slice(0, 60);
   const description = data.description?.trim() || null;
   const icon = data.icon?.trim() || null;
   const order = Number.isFinite(data.order) ? Number(data.order) : 0;
+  const leaderId = await resolveClubLeaderId(data.leaderEmail);
+  if (!leaderId) throw new Error("그룹장 이메일을 입력해 주세요.");
 
   const existing = await prisma.club.findFirst({
     where: { OR: [{ name }, { slug }] },
@@ -532,37 +588,62 @@ export async function createClub(data: {
   if (existing) throw new Error("이미 같은 이름 또는 슬러그의 동호회가 있습니다.");
 
   const club = await prisma.club.create({
-    data: { name, slug, description, icon },
+    data: { name, slug, description, icon, order, leaderId },
   });
+  await ensureClubLeaderMembership(club.id, leaderId);
   revalidatePath("/clubs");
+  revalidatePath(`/clubs/${club.slug}`);
   revalidatePath("/admin/clubs");
   return club;
 }
 
 export async function updateClub(
   id: string,
-  data: { name: string; slug?: string; description?: string; icon?: string; order?: number },
+  data: {
+    name: string;
+    slug?: string;
+    description?: string;
+    icon?: string;
+    order?: number;
+    leaderEmail?: string;
+  },
 ) {
   await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
-  const existing = await prisma.club.findUnique({ where: { id } });
+  const existing = await prisma.club.findUnique({
+    where: { id },
+    include: { leader: { select: { email: true } } },
+  });
   if (!existing) throw new Error("Not found");
 
   const name = data.name.trim();
   if (!name) throw new Error("동호회 이름을 입력해 주세요.");
-  const slug = (data.slug?.trim() || slugifyTaxonomy(name) || existing.slug).slice(0, 60);
+  const slug = (data.slug?.trim() || slugifyClub(name) || existing.slug).slice(0, 60);
   const description = data.description?.trim() || null;
   const icon = data.icon?.trim() || null;
+  const leaderEmail =
+    data.leaderEmail?.trim() || existing.leader?.email || undefined;
+  const leaderId = await resolveClubLeaderId(leaderEmail);
+  if (!leaderId) throw new Error("그룹장 이메일을 입력해 주세요.");
 
   const conflict = await prisma.club.findFirst({
     where: { id: { not: id }, OR: [{ name }, { slug }] },
   });
   if (conflict) throw new Error("이미 같은 이름 또는 슬러그의 동호회가 있습니다.");
 
+  if (existing.leaderId && existing.leaderId !== leaderId) {
+    await prisma.clubMember.updateMany({
+      where: { clubId: id, userId: existing.leaderId, role: "leader" },
+      data: { role: "member" },
+    });
+  }
+
   const club = await prisma.club.update({
     where: { id },
-    data: { name, slug, description, icon },
+    data: { name, slug, description, icon, leaderId },
   });
+  await ensureClubLeaderMembership(club.id, leaderId);
   revalidatePath("/clubs");
+  revalidatePath(`/clubs/${club.slug}`);
   revalidatePath("/admin/clubs");
   return club;
 }
@@ -589,7 +670,7 @@ export async function approveClubRequest(id: string) {
   if (request.status !== "PENDING") throw new Error("이미 처리된 요청입니다.");
 
   const name = request.name.trim();
-  const slug = (slugifyTaxonomy(name) || `club-${Date.now()}`).slice(0, 60);
+  const slug = slugifyClub(name).slice(0, 60);
   const existing = await prisma.club.findFirst({
     where: { OR: [{ name }, { slug }] },
   });
@@ -600,12 +681,18 @@ export async function approveClubRequest(id: string) {
       name,
       slug,
       description: request.description,
+      leaderId: request.userId,
     },
   });
   await prisma.clubMember.upsert({
     where: { clubId_userId: { clubId: club.id, userId: request.userId } },
-    update: {},
-    create: { clubId: club.id, userId: request.userId, role: "member" },
+    update: { role: "leader", status: "APPROVED" },
+    create: {
+      clubId: club.id,
+      userId: request.userId,
+      role: "leader",
+      status: "APPROVED",
+    },
   });
   await prisma.clubRequest.update({
     where: { id },
@@ -613,6 +700,8 @@ export async function approveClubRequest(id: string) {
   });
   revalidatePath("/clubs");
   revalidatePath(`/clubs/${club.slug}`);
+  revalidatePath(`/clubs/${club.slug}/members`);
+  revalidatePath(`/clubs/${club.slug}/notices`);
   revalidatePath("/admin/clubs");
   revalidatePath("/admin/club-requests");
 }

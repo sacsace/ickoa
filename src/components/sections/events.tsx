@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { MapPin, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
+import { EventCoverImage } from "@/components/events/event-cover-image";
 import { FadeIn, SectionHeader, SectionShell } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
 import { isEventEnded } from "@/lib/event-status";
+import { eventCoverImage } from "@/lib/sanitize-html";
 
 type EventItem = {
   id: string;
@@ -14,6 +15,7 @@ type EventItem = {
   date: Date;
   location: string;
   image: string | null;
+  description?: string | null;
   maxAttendees: number;
   _count: { registrations: number };
 };
@@ -46,17 +48,15 @@ export function EventsSection({ events }: { events: EventItem[] }) {
       {featured && (
         <FadeIn className="mb-2 border border-border bg-card">
           <div className="grid md:grid-cols-2">
-            {featured.image && (
+            {eventCoverImage(featured) ? (
               <div className="relative aspect-[16/10] md:aspect-auto md:min-h-[300px]">
-                <Image
-                  src={featured.image}
+                <EventCoverImage
+                  src={eventCoverImage(featured)!}
                   alt={featured.title}
-                  fill
-                  className="object-cover"
                   sizes="50vw"
                 />
               </div>
-            )}
+            ) : null}
             <div className="flex flex-col justify-center p-6 md:p-10">
               <p className="text-xs font-medium tracking-[0.12em] text-brand uppercase">
                 {featuredEnded ? "종료 · " : ""}

@@ -6,7 +6,9 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createBylaw, updateBylaw } from "@/actions/about";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 type BylawFormProps = {
   initial?: {
@@ -32,6 +34,10 @@ export function AdminBylawForm({ initial }: BylawFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!form.title.trim() || !plainTextFromHtml(form.content)) {
+      setError("제목과 내용을 입력해 주세요.");
+      return;
+    }
     const payload = {
       title: form.title,
       content: form.content,
@@ -90,13 +96,11 @@ export function AdminBylawForm({ initial }: BylawFormProps) {
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">내용 *</label>
-          <textarea
+          <ContentEditor
             value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={16}
-            className="w-full border border-border bg-background px-4 py-3 font-mono text-sm leading-relaxed"
+            onChange={(content) => setForm({ ...form, content })}
             placeholder="제1조 (명칭) ..."
-            required
+            minHeight={360}
           />
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}

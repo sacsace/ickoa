@@ -5,8 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminClubsPage() {
   const clubs = await prisma.club.findMany({
-    include: { _count: { select: { members: true } } },
-    orderBy: { name: "asc" },
+    orderBy: [{ order: "asc" }, { name: "asc" }],
   });
 
   return (
@@ -15,8 +14,8 @@ export default async function AdminClubsPage() {
         id: c.id,
         name: c.name,
         slug: c.slug,
-        order: 0,
-        count: c._count.members,
+        order: c.order,
+        count: 0,
         extra: c.description,
       }))}
     />

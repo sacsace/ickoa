@@ -8,6 +8,17 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { isSiteSession } from "@/lib/session-kind";
 
+function safeCallback(callbackUrl: string | null) {
+  if (
+    callbackUrl?.startsWith("/") &&
+    !callbackUrl.startsWith("/admin") &&
+    callbackUrl !== "/login"
+  ) {
+    return callbackUrl;
+  }
+  return "/";
+}
+
 export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,15 +30,9 @@ export default function LoginForm() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (status === "authenticated" && isSiteSession(session)) {
-      const next =
-        callbackUrl?.startsWith("/") &&
-        !callbackUrl.startsWith("/admin") &&
-        callbackUrl !== "/login"
-          ? callbackUrl
-          : "/";
-      router.replace(next);
-    }
+    if (status !== "authenticated") return;
+    if (!isSiteSession(session)) return;
+    router.replace(safeCallback(callbackUrl));
   }, [status, session, callbackUrl, router]);
 
   async function handleLogin(e: React.FormEvent) {
@@ -51,13 +56,7 @@ export default function LoginForm() {
       return;
     }
 
-    const next =
-      callbackUrl?.startsWith("/") &&
-      !callbackUrl.startsWith("/admin") &&
-      callbackUrl !== "/login"
-        ? callbackUrl
-        : "/";
-    router.replace(next);
+    router.replace(safeCallback(callbackUrl));
     router.refresh();
   }
 
@@ -70,7 +69,9 @@ export default function LoginForm() {
       <div className="mx-auto max-w-md px-4 py-12">
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="mb-1 block text-sm font-medium">아이디 또는 이메일</label>
+            <label className="mb-1 block text-sm font-medium">
+              아이디 또는 이메일
+            </label>
             <input
               type="text"
               value={identifier}
@@ -94,7 +95,7 @@ export default function LoginForm() {
               suppressHydrationWarning
             />
           </div>
-          {error && <p className="text-sm text-brand">{error}</p>}
+          {error ? <p className="text-sm text-brand">{error}</p> : null}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "로그인 중..." : "로그인"}
           </Button>
@@ -102,7 +103,10 @@ export default function LoginForm() {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           계정이 없으신가요?{" "}
-          <Link href="/register" className="text-foreground underline hover:opacity-70">
+          <Link
+            href="/register"
+            className="text-foreground underline hover:opacity-70"
+          >
             회원가입
           </Link>
         </p>

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { adminHasRole } from "@/lib/session-kind";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -21,10 +22,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const session = await auth();
-  if (
-    !session?.user ||
-    !["SUPER_ADMIN", "CONTENT_ADMIN"].includes(session.user.role)
-  ) {
+  if (!adminHasRole(session, ["SUPER_ADMIN", "CONTENT_ADMIN"])) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

@@ -12,10 +12,16 @@ export const GUIDE_CATEGORY_FALLBACK = [
   { name: "통신사", nameEn: "Telecom", slug: "telecom" },
   { name: "게스트하우스", nameEn: "Korean Hotels", slug: "guesthouse" },
   { name: "음식점", nameEn: "Korean Restaurants", slug: "restaurant" },
+  { name: "통역원", nameEn: "Interpreters", slug: "interpreter" },
 ] as const;
 
 /** 사이트 메뉴에 노출할 카테고리 슬러그 (순서 고정) */
-export const GUIDE_MENU_SLUGS = ["bank", "guesthouse", "restaurant"] as const;
+export const GUIDE_MENU_SLUGS = [
+  "bank",
+  "guesthouse",
+  "restaurant",
+  "interpreter",
+] as const;
 
 export type GuideMenuSlug = (typeof GUIDE_MENU_SLUGS)[number];
 
@@ -27,6 +33,7 @@ export function guideDisplayName(name: string) {
   if (name === "은행 계좌" || name === "은행") return "한국은행";
   if (name === "게스트하우스") return "한인 호텔 안내";
   if (name === "음식점") return "한인 식당 안내";
+  if (name === "통역원") return "통역원 정보 등록";
   return name;
 }
 
@@ -34,6 +41,7 @@ export function guideWriteLabel(name: string) {
   if (name === "은행 계좌" || name === "은행") return "한국은행";
   if (name === "게스트하우스") return "한인 호텔";
   if (name === "음식점") return "한인 식당";
+  if (name === "통역원") return "통역원 정보";
   return name;
 }
 

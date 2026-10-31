@@ -5,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu, X, Globe, ChevronDown, Search } from "lucide-react";
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { LogoWithText } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { isSiteSession } from "@/lib/session-kind";
+import { getSiteUser, isSiteSession } from "@/lib/session-kind";
+import { signOutSite } from "@/lib/portal-signout";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   mainNavigation,
@@ -24,8 +25,9 @@ export function Header() {
   const [megaOpen, setMegaOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const { locale, setLocale, t } = useLocale();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
   const siteSession = isSiteSession(session);
+  const siteUser = getSiteUser(session);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -60,7 +62,7 @@ export function Header() {
           ) : (
             <button
               type="button"
-              onClick={() => signOut({ callbackUrl: "/" })}
+              onClick={() => void signOutSite(update, { callbackUrl: "/" })}
               className="hover:text-brand"
             >
               {t.nav.logout}
@@ -153,9 +155,9 @@ export function Header() {
                 title="내 정보 수정"
               >
                 <span className="max-w-[140px] truncate">
-                  {session!.user.name ?? "회원"}
+                  {siteUser?.name ?? "회원"}
                 </span>
-                <UserAvatar src={session!.user.image} name={session!.user.name} />
+                <UserAvatar src={siteUser?.image} name={siteUser?.name} />
               </Link>
             </div>
           ) : null}
@@ -270,7 +272,7 @@ export function Header() {
                     className="w-full"
                     onClick={() => {
                       setMobileOpen(false);
-                      signOut({ callbackUrl: "/" });
+                      void signOutSite(update, { callbackUrl: "/" });
                     }}
                   >
                     {t.nav.logout}

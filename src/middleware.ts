@@ -6,11 +6,18 @@ export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isAdminLogin = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin") && !isAdminLogin;
-  const isLoggedIn = !!req.auth;
-  const sessionKind = req.auth?.sessionKind;
-  const role = req.auth?.user?.role;
-  const isAdminLoggedIn =
-    isLoggedIn && sessionKind === "admin" && role && isAdmin(role);
+
+  const admin = req.auth?.admin;
+  const legacyAdminOnly =
+    !admin &&
+    req.auth?.sessionKind === "admin" &&
+    req.auth.user?.role &&
+    isAdmin(req.auth.user.role);
+
+  const isAdminLoggedIn = !!(
+    (admin && isAdmin(admin.role)) ||
+    legacyAdminOnly
+  );
 
   if (isAdminLogin && isAdminLoggedIn) {
     return NextResponse.redirect(new URL("/admin", req.url));

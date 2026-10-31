@@ -74,9 +74,21 @@ export async function getEvents(limit?: number) {
   });
 }
 
-export async function getClubs(limit?: number) {
+export async function getClubs(limit?: number, q?: string) {
+  const query = q?.trim();
   return prisma.club.findMany({
-    include: { _count: { select: { members: true } } },
+    where: query
+      ? {
+          OR: [
+            { name: { contains: query, mode: "insensitive" } },
+            { description: { contains: query, mode: "insensitive" } },
+            { leader: { name: { contains: query, mode: "insensitive" } } },
+          ],
+        }
+      : undefined,
+    include: {
+      leader: { select: { id: true, name: true } },
+    },
     orderBy: { order: "asc" },
     ...(limit ? { take: limit } : {}),
   });

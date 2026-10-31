@@ -283,9 +283,11 @@ function BusinessDetailDialog({
 export function BusinessDirectoryTable({
   businesses,
   currentUserId,
+  manageAll = false,
 }: {
   businesses: BusinessListItem[];
   currentUserId?: string | null;
+  manageAll?: boolean;
 }) {
   const router = useRouter();
   const [selected, setSelected] = useState<BusinessListItem | null>(null);
@@ -315,7 +317,9 @@ export function BusinessDirectoryTable({
         </thead>
         <tbody className="divide-y divide-border">
           {businesses.map((biz) => {
-            const canSee = !!currentUserId && biz.ownerId === currentUserId;
+            const canSee =
+              manageAll ||
+              (!!currentUserId && biz.ownerId === currentUserId);
             const phone = publicValue(
               biz.contactPhone || biz.phone,
               biz.hideContactPhone,
@@ -382,7 +386,10 @@ export function BusinessDirectoryTable({
       <BusinessDetailDialog
         business={selected}
         open={selected !== null}
-        isOwner={!!currentUserId && selected?.ownerId === currentUserId}
+        isOwner={
+          manageAll ||
+          (!!currentUserId && selected?.ownerId === currentUserId)
+        }
         onClose={() => setSelected(null)}
         deleting={isPending}
         onDelete={() => {

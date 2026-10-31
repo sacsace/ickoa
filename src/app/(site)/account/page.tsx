@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AccountForm } from "@/components/account/account-form";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSiteUser } from "@/lib/session-kind";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -16,12 +17,13 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await auth();
-  if (!session?.user?.id) {
+  const siteUser = getSiteUser(session);
+  if (!siteUser) {
     redirect(`/login?callbackUrl=${encodeURIComponent("/account")}`);
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: siteUser.id },
     select: {
       name: true,
       nameEn: true,

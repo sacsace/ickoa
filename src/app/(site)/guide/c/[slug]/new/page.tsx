@@ -50,7 +50,11 @@ export default async function NewGuideItemPage({
         title={`${writeLabel} 등록`}
         backHref={guideCategoryPathBySlug(category.slug)}
       />
-      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
+      <div
+        className={`mx-auto px-4 py-8 md:px-6 lg:px-8 ${
+          category.slug === "interpreter" ? "max-w-3xl" : "max-w-7xl"
+        }`}
+      >
         <GuideForm category={category.name} categorySlug={category.slug} />
       </div>
     </>

@@ -5,8 +5,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ContentEditor } from "@/components/community/content-editor";
+import { InterpreterForm } from "@/components/guide/interpreter-form";
 import { createSiteGuide, updateSiteGuide } from "@/actions/guides";
 import { guideListPath, guideWriteLabel } from "@/data/guide";
+import { isInterpreterCategory } from "@/lib/interpreter-guide";
 import { plainTextFromHtml, sanitizePostHtml } from "@/lib/sanitize-html";
 
 type GuideFormProps = {
@@ -20,7 +22,14 @@ type GuideFormProps = {
   };
 };
 
-export function GuideForm({ category, categorySlug, initial }: GuideFormProps) {
+export function GuideForm(props: GuideFormProps) {
+  if (isInterpreterCategory(props.category)) {
+    return <InterpreterForm {...props} />;
+  }
+  return <GuideArticleForm {...props} />;
+}
+
+function GuideArticleForm({ category, categorySlug, initial }: GuideFormProps) {
   const router = useRouter();
   const isEdit = Boolean(initial?.id);
   const listHref = guideListPath(category, categorySlug);

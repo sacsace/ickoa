@@ -16,9 +16,46 @@ const ALLOWED_TAGS = new Set([
   "a",
   "div",
   "span",
+  "img",
+  "figure",
+  "figcaption",
 ]);
 
-const ALLOWED_ATTRS = new Set(["href", "target", "rel", "class"]);
+const ALLOWED_ATTRS = new Set([
+  "href",
+  "target",
+  "rel",
+  "class",
+  "src",
+  "alt",
+  "width",
+  "height",
+  "loading",
+  "style",
+]);
+
+function isSafeSrc(value: string) {
+  const src = value.trim();
+  if (!src) return false;
+  if (/^javascript:/i.test(src)) return false;
+  if (/^(https?:|\/|data:image\/)/i.test(src)) return true;
+  return false;
+}
+
+/** img 크기 조절용 style만 허용 (width / max-width / height) */
+export function sanitizeInlineStyle(value: string) {
+  const allowed: string[] = [];
+  for (const part of value.split(";")) {
+    const [rawProp, ...rest] = part.split(":");
+    if (!rawProp || rest.length === 0) continue;
+    const prop = rawProp.trim().toLowerCase();
+    const val = rest.join(":").trim().toLowerCase();
+    if (!["width", "max-width", "height"].includes(prop)) continue;
+    if (!/^(\d+(\.\d+)?(%|px)|auto)$/.test(val)) continue;
+    allowed.push(`${prop}: ${val}`);
+  }
+  return allowed.join("; ");
+}
 
 /** 게시글 HTML 저장/표시용 간단 새니타이즈 */
 export function sanitizePostHtml(html: string) {
@@ -41,7 +78,12 @@ export function sanitizePostHtml(html: string) {
         const el = child as HTMLElement;
         const tag = el.tagName.toLowerCase();
         if (!ALLOWED_TAGS.has(tag)) {
-          el.replaceWith(...Array.from(el.childNodes));
+          // img 등 void 요소는 unwrap 시 내용이 없으므로 그냥 제거
+          if (tag === "img") {
+            el.remove();
+          } else {
+            el.replaceWith(...Array.from(el.childNodes));
+          }
           continue;
         }
         for (const attr of Array.from(el.attributes)) {
@@ -59,6 +101,30 @@ export function sanitizePostHtml(html: string) {
               if (href.startsWith("http")) el.setAttribute("target", "_blank");
             }
           }
+          if (name === "src") {
+            if (!isSafeSrc(attr.value)) {
+              el.removeAttribute("src");
+            }
+          }
+          if (name === "style") {
+            const cleaned = sanitizeInlineStyle(attr.value);
+            if (cleaned) el.setAttribute("style", cleaned);
+            else el.removeAttribute("style");
+          }
+        }
+        if (tag === "img" && !el.getAttribute("src")) {
+          el.remove();
+          continue;
+        }
+        if (tag === "img" && !el.getAttribute("loading")) {
+          el.setAttribute("loading", "lazy");
+        }
+        if (tag === "img") {
+          const cls = (el.getAttribute("class") || "")
+            .split(/\s+/)
+            .filter((c) => c && c !== "is-selected" && !c.startsWith("ProseMirror"));
+          if (cls.length) el.setAttribute("class", cls.join(" "));
+          else el.removeAttribute("class");
         }
         walk(el);
       } else if (child.nodeType === Node.COMMENT_NODE) {
@@ -85,4 +151,22 @@ export function plainTextFromHtml(html: string) {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .trim();
+}
+
+/** 본문 HTML에서 첫 이미지 src (썸네일 후보) */
+export function firstImageSrcFromHtml(html?: string | null) {
+  if (!html) return null;
+  const match = html.match(/<img[^>]+src\s*=\s*(["'])(.*?)\1/i);
+  const src = match?.[2]?.trim();
+  if (!src || !isSafeSrc(src)) return null;
+  return src;
+}
+
+export function eventCoverImage(event: {
+  image?: string | null;
+  description?: string | null;
+}) {
+  const direct = event.image?.trim();
+  if (direct) return direct;
+  return firstImageSrcFromHtml(event.description);
 }

@@ -2,6 +2,8 @@ import { notFound } from "next/navigation";
 import { getPost } from "@/lib/data";
 import { auth } from "@/lib/auth";
 import { PostDetailClient } from "@/components/community/post-detail";
+import { getSiteUser } from "@/lib/session-kind";
+import { isSiteSuperuser } from "@/lib/site-permissions";
 import { createMetadata, truncateDescription } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +34,13 @@ export default async function PostPage({
   const [post, session] = await Promise.all([getPost(id), auth()]);
   if (!post || post.board.slug !== slug) notFound();
 
+  const siteUser = getSiteUser(session);
+
   return (
-    <PostDetailClient post={post} currentUserId={session?.user?.id} />
+    <PostDetailClient
+      post={post}
+      currentUserId={siteUser?.id}
+      manageAll={isSiteSuperuser(siteUser)}
+    />
   );
 }

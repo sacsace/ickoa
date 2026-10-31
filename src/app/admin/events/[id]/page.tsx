@@ -20,6 +20,7 @@ export default async function AdminEventEditPage({
         title: event.title,
         description: event.description,
         location: event.location,
+        mapsUrl: event.mapsUrl,
         maxAttendees: event.maxAttendees,
         date: event.date,
       }}

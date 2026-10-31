@@ -7,25 +7,14 @@ import { Heart, Flag } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
+import { useAlert } from "@/components/providers/alert-provider";
 import {
   createComment,
   toggleLike,
   createReport,
   deleteOwnPost,
 } from "@/actions/community";
-import { isHtmlContent, sanitizePostHtml } from "@/lib/sanitize-html";
-
-function PostBody({ content }: { content: string }) {
-  if (isHtmlContent(content)) {
-    return (
-      <div
-        className="post-body text-sm leading-relaxed [&_a]:text-brand [&_a]:underline [&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-3 [&_blockquote]:text-muted-foreground [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:text-lg [&_h2]:font-bold [&_li]:my-0.5 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:mb-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"
-        dangerouslySetInnerHTML={{ __html: sanitizePostHtml(content) }}
-      />
-    );
-  }
-  return <p className="whitespace-pre-wrap leading-relaxed">{content}</p>;
-}
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 
 type PostData = {
   id: string;
@@ -47,17 +36,21 @@ type PostData = {
 export function PostDetailClient({
   post,
   currentUserId,
+  manageAll = false,
 }: {
   post: PostData;
   currentUserId?: string | null;
+  manageAll?: boolean;
 }) {
   const router = useRouter();
+  const alert = useAlert();
   const [comment, setComment] = useState("");
   const [likeCount, setLikeCount] = useState(post._count.likes);
   const [liked, setLiked] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [deleteOpen, setDeleteOpen] = useState(false);
-  const canManage = !!currentUserId && post.author.id === currentUserId;
+  const canManage =
+    manageAll || (!!currentUserId && post.author.id === currentUserId);
   const isLoggedIn = !!currentUserId;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/community/${post.board.slug}/${post.id}`)}`;
 
@@ -104,7 +97,11 @@ export function PostDetailClient({
     startTransition(async () => {
       try {
         await createReport(post.id, reason);
-        alert("신고가 접수되었습니다.");
+        await alert({
+          title: "신고 접수",
+          message: "신고가 접수되었습니다.",
+          variant: "success",
+        });
       } catch {
         router.push(loginHref);
       }
@@ -163,7 +160,7 @@ export function PostDetailClient({
         </div>
 
         <div className="border border-border bg-card p-5 md:p-6">
-          <PostBody content={post.content} />
+          <RichHtmlBody content={post.content} />
           {post.attachments.length > 0 && (
             <div className="mt-4 space-y-2 border-t border-border pt-4">
               {post.attachments.map((a) => (
@@ -249,8 +246,12 @@ export function PostDetailClient({
               router.push(`/community/${result.boardSlug}`);
               router.refresh();
             } catch {
-              alert("삭제 권한이 없거나 로그인 상태가 아닙니다.");
               setDeleteOpen(false);
+              await alert({
+                title: "삭제 실패",
+                message: "삭제 권한이 없거나 로그인 상태가 아닙니다.",
+                variant: "error",
+              });
             }
           });
         }}

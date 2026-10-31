@@ -10,7 +10,18 @@ export default async function AdminClubEditPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const club = await prisma.club.findUnique({ where: { id } });
+  const club = await prisma.club.findUnique({
+    where: { id },
+    include: { leader: { select: { email: true } } },
+  });
   if (!club) notFound();
-  return <AdminClubForm mode="edit" club={club} />;
+  return (
+    <AdminClubForm
+      mode="edit"
+      club={{
+        ...club,
+        leaderEmail: club.leader?.email ?? null,
+      }}
+    />
+  );
 }

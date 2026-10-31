@@ -21,7 +21,7 @@ export default async function GuidePage() {
         title="첸나이 생활 가이드"
         subtitle="카테고리를 선택하면 세부 안내를 확인할 수 있습니다"
       />
-      <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-[1356px] px-4 py-12 md:px-6 lg:px-8">
         <GuideTopicNav categories={categories} />
         <GuideCategoryGrid categories={categories} />
       </div>

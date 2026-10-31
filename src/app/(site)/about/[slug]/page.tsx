@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { PageHeader } from "@/components/ui/page-header";
 import { LeadershipOrgChart } from "@/components/about/leadership-org-chart";
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { createMetadata } from "@/lib/seo";
 import { ensureAboutDefaults } from "@/lib/about-defaults";
 import { prisma } from "@/lib/prisma";
@@ -73,9 +74,10 @@ export default async function AboutSubPage({
                     {doc.title}
                   </summary>
                   <div className="border-t border-border px-5 py-6 md:px-8 md:py-8">
-                    <div className="whitespace-pre-wrap text-[15px] leading-[1.85] text-foreground md:text-base">
-                      {doc.content}
-                    </div>
+                    <RichHtmlBody
+                      content={doc.content}
+                      className="text-[15px] leading-[1.85] md:text-base"
+                    />
                   </div>
                 </details>
               ))}
@@ -125,9 +127,12 @@ export default async function AboutSubPage({
                       <div className="border border-border bg-card px-5 py-5 md:px-7 md:py-6">
                         <p className="text-base font-semibold leading-snug">{entry.title}</p>
                         {entry.description ? (
-                          <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
-                            {entry.description}
-                          </p>
+                          <div className="mt-2">
+                            <RichHtmlBody
+                              content={entry.description}
+                              className="text-sm leading-relaxed text-muted-foreground [&_p]:mb-1"
+                            />
+                          </div>
                         ) : null}
                       </div>
                     </div>

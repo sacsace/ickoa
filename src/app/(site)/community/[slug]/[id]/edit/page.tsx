@@ -3,6 +3,8 @@ import { PageHeader } from "@/components/ui/page-header";
 import { PostForm } from "@/components/community/post-form";
 import { getPost } from "@/lib/data";
 import { auth } from "@/lib/auth";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 import { createMetadata } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
@@ -27,7 +29,8 @@ export default async function EditPostPage({
 }) {
   const { slug, id } = await params;
   const session = await auth();
-  if (!session?.user) {
+  const siteUser = getSiteUser(session);
+  if (!siteUser) {
     redirect(
       `/login?callbackUrl=${encodeURIComponent(`/community/${slug}/${id}/edit`)}`,
     );
@@ -35,7 +38,7 @@ export default async function EditPostPage({
 
   const post = await getPost(id);
   if (!post || post.board.slug !== slug) notFound();
-  if (post.authorId !== session.user.id) {
+  if (!canManageSiteResource(siteUser, post.authorId)) {
     redirect(`/community/${slug}/${id}`);
   }
 

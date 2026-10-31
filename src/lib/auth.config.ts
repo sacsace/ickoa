@@ -5,6 +5,8 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { isAdmin } from "@/lib/permissions-client";
 
+const SESSION_MAX_AGE = 60 * 60 * 24 * 30; // 30일
+
 const KakaoProvider = {
   id: "kakao",
   name: "Kakao",
@@ -63,12 +65,98 @@ const NaverProvider = {
   },
 };
 
+function assignSite(
+  token: Record<string, unknown>,
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string;
+    loginId?: string | null;
+  },
+) {
+  token.siteId = user.id;
+  token.siteName = user.name ?? null;
+  token.siteEmail = user.email ?? null;
+  token.siteImage = user.image ?? null;
+  token.siteRole = user.role ?? "MEMBER";
+  token.siteLoginId = user.loginId ?? null;
+}
+
+function assignAdmin(
+  token: Record<string, unknown>,
+  user: {
+    id: string;
+    name?: string | null;
+    email?: string | null;
+    image?: string | null;
+    role?: string;
+    loginId?: string | null;
+  },
+) {
+  token.adminId = user.id;
+  token.adminName = user.name ?? null;
+  token.adminEmail = user.email ?? null;
+  token.adminImage = user.image ?? null;
+  token.adminRole = user.role ?? "MEMBER";
+  token.adminLoginId = user.loginId ?? null;
+}
+
+function clearSite(token: Record<string, unknown>) {
+  delete token.siteId;
+  delete token.siteName;
+  delete token.siteEmail;
+  delete token.siteImage;
+  delete token.siteRole;
+  delete token.siteLoginId;
+}
+
+function clearAdmin(token: Record<string, unknown>) {
+  delete token.adminId;
+  delete token.adminName;
+  delete token.adminEmail;
+  delete token.adminImage;
+  delete token.adminRole;
+  delete token.adminLoginId;
+}
+
+function syncLegacyFields(token: Record<string, unknown>) {
+  // 사이트 우선(웹 UI), 없으면 관리자
+  if (token.siteId) {
+    token.id = token.siteId;
+    token.name = token.siteName;
+    token.email = token.siteEmail;
+    token.picture = token.siteImage;
+    token.role = token.siteRole ?? "MEMBER";
+    token.sessionKind = "site";
+  } else if (token.adminId) {
+    token.id = token.adminId;
+    token.name = token.adminName;
+    token.email = token.adminEmail;
+    token.picture = token.adminImage;
+    token.role = token.adminRole ?? "MEMBER";
+    token.sessionKind = "admin";
+  } else {
+    delete token.id;
+    delete token.role;
+    delete token.sessionKind;
+  }
+}
+
 export const authConfig = {
   pages: {
     signIn: "/login",
     error: "/login",
   },
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+    maxAge: SESSION_MAX_AGE,
+    updateAge: 60 * 60 * 24, // 24시간마다 슬라이딩 갱신
+  },
+  jwt: {
+    maxAge: SESSION_MAX_AGE,
+  },
   providers: [
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
       ? [
@@ -100,8 +188,12 @@ export const authConfig = {
           (credentials.portal as string | undefined)?.trim() === "admin"
             ? "admin"
             : "site";
-        const loginId = (credentials.loginId as string | undefined)?.trim().toLowerCase();
-        const email = (credentials.email as string | undefined)?.trim().toLowerCase();
+        const loginId = (credentials.loginId as string | undefined)
+          ?.trim()
+          .toLowerCase();
+        const email = (credentials.email as string | undefined)
+          ?.trim()
+          .toLowerCase();
 
         if (!loginId && !email) return null;
 
@@ -125,6 +217,7 @@ export const authConfig = {
             email: user.email,
             image: user.image,
             role: user.role,
+            loginId: user.loginId,
             sessionKind: "admin" as const,
           };
         }
@@ -135,66 +228,204 @@ export const authConfig = {
           email: user.email,
           image: user.image,
           role: user.role,
+          loginId: user.loginId,
           sessionKind: "site" as const,
         };
       },
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account, trigger }) {
+    async jwt({ token, user, account, trigger, session }) {
+      const t = token as Record<string, unknown>;
+
+      // 구 JWT → 이중 슬롯 마이그레이션
+      if (t.id && !t.siteId && !t.adminId) {
+        if (t.sessionKind === "admin") {
+          assignAdmin(t, {
+            id: String(t.id),
+            name: (t.name as string | null | undefined) ?? null,
+            email: (t.email as string | null | undefined) ?? null,
+            image: (t.picture as string | null | undefined) ?? null,
+            role: String(t.role ?? "MEMBER"),
+          });
+        } else {
+          assignSite(t, {
+            id: String(t.id),
+            name: (t.name as string | null | undefined) ?? null,
+            email: (t.email as string | null | undefined) ?? null,
+            image: (t.picture as string | null | undefined) ?? null,
+            role: String(t.role ?? "MEMBER"),
+          });
+        }
+      }
+
       if (user) {
-        token.role = (user as { role?: string }).role ?? "MEMBER";
-        token.id = user.id;
-        token.name = user.name;
-        token.email = user.email;
-        token.picture = user.image || null;
-        token.sessionKind =
+        const kind =
           (user as { sessionKind?: "site" | "admin" }).sessionKind ??
           (account?.provider === "credentials" ? "site" : "site");
+        const payload = {
+          id: user.id!,
+          name: user.name,
+          email: user.email,
+          image: user.image,
+          role: (user as { role?: string }).role ?? "MEMBER",
+          loginId: (user as { loginId?: string | null }).loginId ?? null,
+        };
+        if (kind === "admin") assignAdmin(t, payload);
+        else assignSite(t, payload);
       } else if (account && account.provider !== "credentials") {
-        token.sessionKind = "site";
-      } else if (!token.id && token.email) {
+        // OAuth는 사이트 세션
+        if (t.id) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: String(t.id) },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              image: true,
+              loginId: true,
+            },
+          });
+          if (dbUser) {
+            assignSite(t, dbUser);
+          } else {
+            assignSite(t, {
+              id: String(t.id),
+              name: (t.name as string | null | undefined) ?? null,
+              email: (t.email as string | null | undefined) ?? null,
+              image: (t.picture as string | null | undefined) ?? null,
+              role: String(t.role ?? "MEMBER"),
+            });
+          }
+        }
+      } else if (!t.siteId && !t.adminId && t.email) {
         const dbUser = await prisma.user.findUnique({
-          where: { email: token.email },
-          select: { id: true, name: true, email: true, role: true, image: true },
+          where: { email: t.email as string },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            image: true,
+            loginId: true,
+          },
         });
         if (dbUser) {
-          token.id = dbUser.id;
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.role = dbUser.role;
-          token.picture = dbUser.image || null;
+          assignSite(t, dbUser);
         }
       }
 
-      // 내 정보 저장 후 session.update() → JWT 이름/이메일/사진 즉시 반영
-      if (trigger === "update" && token.id) {
+      // 기존 JWT에 loginId 없을 때 한 번 채움
+      if (t.siteId && t.siteLoginId == null) {
         const dbUser = await prisma.user.findUnique({
-          where: { id: token.id as string },
-          select: { name: true, email: true, role: true, image: true },
+          where: { id: t.siteId as string },
+          select: { loginId: true, role: true },
         });
         if (dbUser) {
-          token.name = dbUser.name;
-          token.email = dbUser.email;
-          token.role = dbUser.role;
-          token.picture = dbUser.image || null;
+          t.siteLoginId = dbUser.loginId ?? null;
+          t.siteRole = dbUser.role;
+        }
+      }
+      if (t.adminId && t.adminLoginId == null) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: t.adminId as string },
+          select: { loginId: true, role: true },
+        });
+        if (dbUser) {
+          t.adminLoginId = dbUser.loginId ?? null;
+          t.adminRole = dbUser.role;
         }
       }
 
+      if (trigger === "update") {
+        const clearPortal = (session as { clearPortal?: string } | null)
+          ?.clearPortal;
+        if (clearPortal === "site") clearSite(t);
+        if (clearPortal === "admin") clearAdmin(t);
+
+        // 프로필 갱신: 사이트 슬롯 기준
+        if (t.siteId) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: t.siteId as string },
+            select: {
+              name: true,
+              email: true,
+              role: true,
+              image: true,
+              loginId: true,
+            },
+          });
+          if (dbUser) {
+            t.siteName = dbUser.name;
+            t.siteEmail = dbUser.email;
+            t.siteRole = dbUser.role;
+            t.siteImage = dbUser.image || null;
+            t.siteLoginId = dbUser.loginId || null;
+          }
+        }
+        if (t.adminId) {
+          const dbUser = await prisma.user.findUnique({
+            where: { id: t.adminId as string },
+            select: {
+              name: true,
+              email: true,
+              role: true,
+              image: true,
+              loginId: true,
+            },
+          });
+          if (dbUser) {
+            t.adminName = dbUser.name;
+            t.adminEmail = dbUser.email;
+            t.adminRole = dbUser.role;
+            t.adminImage = dbUser.image || null;
+            t.adminLoginId = dbUser.loginId || null;
+          }
+        }
+      }
+
+      syncLegacyFields(t);
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.name = (token.name as string | null | undefined) ?? session.user.name;
-        session.user.email =
-          (token.email as string | null | undefined) ?? session.user.email;
-        const picture = (token.picture as string | null | undefined)?.trim();
-        session.user.image = picture || null;
-        session.user.role = (token.role as string) ?? "MEMBER";
-        session.sessionKind =
-          (token.sessionKind as "site" | "admin" | undefined) ?? "site";
+      const site =
+        token.siteId
+          ? {
+              id: String(token.siteId),
+              name: (token.siteName as string | null | undefined) ?? null,
+              email: (token.siteEmail as string | null | undefined) ?? null,
+              image: (token.siteImage as string | null | undefined) ?? null,
+              role: String(token.siteRole ?? "MEMBER"),
+              loginId: (token.siteLoginId as string | null | undefined) ?? null,
+            }
+          : null;
+      const admin =
+        token.adminId
+          ? {
+              id: String(token.adminId),
+              name: (token.adminName as string | null | undefined) ?? null,
+              email: (token.adminEmail as string | null | undefined) ?? null,
+              image: (token.adminImage as string | null | undefined) ?? null,
+              role: String(token.adminRole ?? "MEMBER"),
+              loginId: (token.adminLoginId as string | null | undefined) ?? null,
+            }
+          : null;
+
+      session.site = site;
+      session.admin = admin;
+
+      const primary = site ?? admin;
+      if (primary && session.user) {
+        session.user.id = primary.id;
+        session.user.name = primary.name || "";
+        session.user.email = primary.email || "";
+        session.user.image = primary.image || null;
+        session.user.role = primary.role;
+        session.user.loginId = primary.loginId ?? null;
+        session.sessionKind = site ? "site" : "admin";
       }
+
       return session;
     },
   },

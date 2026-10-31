@@ -7,6 +7,9 @@ export const dynamic = "force-dynamic";
 export default async function AdminUsersPage() {
   const session = await auth();
   const users = await prisma.user.findMany({
+    where: {
+      NOT: { loginId: "root" },
+    },
     select: {
       id: true,
       name: true,

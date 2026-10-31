@@ -1,11 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
 import { PageHeader } from "@/components/ui/page-header";
 import { AuthWriteLink } from "@/components/ui/auth-write-link";
+import { EventCoverImage } from "@/components/events/event-cover-image";
 import { getEvents } from "@/lib/data";
 import { EventRegisterButton } from "@/components/events/event-register-button";
 import { createMetadata } from "@/lib/seo";
 import { isEventEnded } from "@/lib/event-status";
+import { eventCoverImage } from "@/lib/sanitize-html";
 import { cn } from "@/lib/utils";
 
 export const metadata = createMetadata({
@@ -38,6 +39,7 @@ export default async function EventsPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {ordered.map((event) => {
               const endedEvent = isEventEnded(event.date);
+              const cover = eventCoverImage(event);
               return (
                 <div
                   key={event.id}
@@ -46,13 +48,12 @@ export default async function EventsPage() {
                     endedEvent && "opacity-75",
                   )}
                 >
-                  {event.image ? (
+                  {cover ? (
                     <div className="relative aspect-[16/9]">
-                      <Image
-                        src={event.image}
+                      <EventCoverImage
+                        src={cover}
                         alt={event.title}
-                        fill
-                        className={cn("object-cover", endedEvent && "grayscale-[30%]")}
+                        ended={endedEvent}
                         sizes="33vw"
                       />
                       {endedEvent ? (

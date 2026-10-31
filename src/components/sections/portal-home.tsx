@@ -373,9 +373,6 @@ export function PortalHome({
                 <li key={club.id}>
                   <Link href={`/clubs/${club.slug}`} className="portal-list-item">
                     <span className="flex-1 text-[13px] font-medium">{club.name}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {club._count.members}명
-                    </span>
                   </Link>
                 </li>
               ))}

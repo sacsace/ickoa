@@ -5,9 +5,11 @@ import { Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { getBusinesses, getBusinessCategoryNames } from "@/lib/data";
 import { BusinessSearch } from "@/components/business/business-search";
-import { BusinessDirectoryTable } from "@/components/business/business-directory-table";
+import { BusinessDirectoryPanel } from "@/components/business/business-directory-panel";
 import { createMetadata } from "@/lib/seo";
 import { auth } from "@/lib/auth";
+import { getSiteUser } from "@/lib/session-kind";
+import { isSiteSuperuser } from "@/lib/site-permissions";
 
 export const metadata = createMetadata({
   title: "한인 기업 디렉토리",
@@ -31,8 +33,10 @@ export default async function BusinessPage({
     getBusinessCategoryNames(),
     auth(),
   ]);
-  const loggedIn = !!session?.user;
-  const currentUserId = session?.user?.id ?? null;
+  const siteUser = getSiteUser(session);
+  const loggedIn = !!siteUser;
+  const currentUserId = siteUser?.id ?? null;
+  const manageAll = isSiteSuperuser(siteUser);
   const mineOnly = params.mine === "1";
   if (mineOnly && !currentUserId) {
     redirect(`/login?callbackUrl=${encodeURIComponent("/business?mine=1")}`);
@@ -85,35 +89,13 @@ export default async function BusinessPage({
           </div>
         </div>
 
-        <div className="mt-8 w-full border border-border bg-card">
-          <div className="border-b border-border px-4 py-3 text-xs text-muted-foreground md:px-5">
-            총 {businesses.length}곳
-            {mineOnly ? " · 내 등록" : ""}
-          </div>
-
-          {businesses.length === 0 ? (
-            <div className="px-4 py-16 text-center md:px-5">
-              <p className="text-sm text-muted-foreground">검색 결과가 없습니다.</p>
-              {loggedIn ? (
-                <Link href="/business/new" className="mt-3 inline-block text-sm font-medium text-brand hover:underline">
-                  이 기업을 직접 등록하기
-                </Link>
-              ) : (
-                <Link
-                  href={`/login?callbackUrl=${encodeURIComponent("/business/new")}`}
-                  className="mt-3 inline-block text-sm font-medium text-brand hover:underline"
-                >
-                  로그인 후 등록하기
-                </Link>
-              )}
-            </div>
-          ) : (
-            <BusinessDirectoryTable
-              businesses={businesses}
-              currentUserId={currentUserId}
-            />
-          )}
-        </div>
+        <BusinessDirectoryPanel
+          businesses={businesses}
+          currentUserId={currentUserId}
+          manageAll={manageAll}
+          loggedIn={loggedIn}
+          mineOnly={mineOnly}
+        />
       </div>
     </>
   );

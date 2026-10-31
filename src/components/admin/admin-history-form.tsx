@@ -6,6 +6,7 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createHistoryEntry, updateHistoryEntry } from "@/actions/about";
 
 type HistoryFormProps = {
@@ -77,11 +78,11 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">설명</label>
-          <textarea
+          <ContentEditor
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={4}
-            className="w-full border border-border bg-background px-4 py-3 text-sm"
+            onChange={(description) => setForm({ ...form, description })}
+            placeholder="연혁 설명을 입력하세요"
+            minHeight={180}
           />
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}

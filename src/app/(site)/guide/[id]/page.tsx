@@ -6,8 +6,11 @@ import { GuideBody } from "@/components/guide/guide-body";
 import { GuideDeleteButton } from "@/components/guide/guide-delete-button";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 import { createMetadata, truncateDescription } from "@/lib/seo";
 import { guideListPath, guideWriteLabel } from "@/data/guide";
+import { isInterpreterCategory } from "@/lib/interpreter-guide";
 import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 export const dynamic = "force-dynamic";
@@ -46,20 +49,25 @@ export default async function GuideDetailPage({
     select: { slug: true },
   });
   const backHref = guideListPath(guide.category, categoryMeta?.slug);
-  const canManage =
-    !!session?.user?.id && guide.createdById === session.user.id;
+  const siteUser = getSiteUser(session);
+  const canManage = canManageSiteResource(siteUser, guide.createdById);
+  const interpreter = isInterpreterCategory(guide.category);
 
   return (
     <>
       <PageHeader title={guide.title} backHref={backHref} />
-      <article className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+      <article
+        className={`mx-auto px-4 py-12 md:px-6 lg:px-8 ${
+          interpreter ? "max-w-3xl" : "max-w-7xl"
+        }`}
+      >
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-2">
             <span className="rounded-lg bg-muted px-3 py-1 text-xs text-muted-foreground">
               {guideWriteLabel(guide.category)}
             </span>
             <span className="self-center text-xs text-muted-foreground">
-              {guide.region}
+              {interpreter ? `통역 가능 지역 · ${guide.region}` : guide.region}
             </span>
           </div>
           <div className="flex items-center gap-2">

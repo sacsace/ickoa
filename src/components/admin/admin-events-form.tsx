@@ -6,7 +6,9 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createEvent, updateEvent } from "@/actions/admin";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 function toLocalInputValue(date: Date | string) {
   const d = typeof date === "string" ? new Date(date) : date;
@@ -21,6 +23,7 @@ type EventsFormProps = {
     title: string;
     description: string;
     location: string;
+    mapsUrl?: string | null;
     maxAttendees: number;
     date: Date | string;
   };
@@ -34,6 +37,7 @@ export function AdminEventsForm({ initial }: EventsFormProps) {
     title: initial?.title ?? "",
     description: initial?.description ?? "",
     location: initial?.location ?? "",
+    mapsUrl: initial?.mapsUrl ?? "",
     maxAttendees: initial?.maxAttendees ?? 50,
     date: initial ? toLocalInputValue(initial.date) : "",
   });
@@ -41,10 +45,15 @@ export function AdminEventsForm({ initial }: EventsFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!form.title.trim() || !plainTextFromHtml(form.description) || !form.location.trim()) {
+      setError("제목, 설명, 장소를 입력해 주세요.");
+      return;
+    }
     const payload = {
       title: form.title,
       description: form.description,
       location: form.location,
+      mapsUrl: form.mapsUrl || undefined,
       date: new Date(form.date),
       maxAttendees: Number(form.maxAttendees),
     };
@@ -84,12 +93,11 @@ export function AdminEventsForm({ initial }: EventsFormProps) {
         </div>
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">설명 *</label>
-          <textarea
+          <ContentEditor
             value={form.description}
-            onChange={(e) => setForm({ ...form, description: e.target.value })}
-            rows={8}
-            className="w-full border border-border bg-background px-4 py-3 text-sm"
-            required
+            onChange={(description) => setForm({ ...form, description })}
+            placeholder="행사 내용을 입력하세요"
+            minHeight={240}
           />
         </div>
         <div>
@@ -99,6 +107,17 @@ export function AdminEventsForm({ initial }: EventsFormProps) {
             onChange={(e) => setForm({ ...form, location: e.target.value })}
             className="h-11 w-full border border-border bg-background px-4 text-sm"
             required
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">
+            Google 지도 URL
+          </label>
+          <input
+            value={form.mapsUrl}
+            onChange={(e) => setForm({ ...form, mapsUrl: e.target.value })}
+            placeholder="https://maps.google.com/... 또는 https://maps.app.goo.gl/..."
+            className="h-11 w-full border border-border bg-background px-4 text-sm"
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">

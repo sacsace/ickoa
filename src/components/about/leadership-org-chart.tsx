@@ -1,3 +1,4 @@
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import type { LeadershipCard } from "@/lib/leadership";
 import { groupByLevel } from "@/lib/leadership";
 
@@ -29,9 +30,12 @@ function MemberCard({ member }: { member: LeadershipCard }) {
         <p className="mt-0.5 text-xs text-muted-foreground">{member.nameEn}</p>
       ) : null}
       {member.bio ? (
-        <p className="mt-2 whitespace-pre-wrap text-left text-xs leading-relaxed text-muted-foreground">
-          {member.bio}
-        </p>
+        <div className="mt-2 text-left">
+          <RichHtmlBody
+            content={member.bio}
+            className="text-xs leading-relaxed text-muted-foreground [&_img]:my-2 [&_p]:mb-1"
+          />
+        </div>
       ) : null}
     </article>
   );

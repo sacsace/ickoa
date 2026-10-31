@@ -4,6 +4,8 @@ import { BusinessRegisterForm } from "@/components/business/business-register-fo
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getBusinessCategoryNames } from "@/lib/data";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -22,7 +24,8 @@ export default async function BusinessEditPage({
 }) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user?.id) {
+  const siteUser = getSiteUser(session);
+  if (!siteUser) {
     redirect(`/login?callbackUrl=${encodeURIComponent(`/business/${id}/edit`)}`);
   }
 
@@ -31,7 +34,7 @@ export default async function BusinessEditPage({
     getBusinessCategoryNames(),
   ]);
   if (!business) notFound();
-  if (business.ownerId !== session.user.id) {
+  if (!canManageSiteResource(siteUser, business.ownerId)) {
     redirect("/business");
   }
 

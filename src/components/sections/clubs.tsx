@@ -4,13 +4,14 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { FadeIn, SectionHeader, SectionShell } from "@/components/ui/motion";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 type Club = {
   id: string;
   slug: string;
   name: string;
   icon: string | null;
-  _count: { members: number };
+  description?: string | null;
 };
 
 export function ClubsSection({ clubs }: { clubs: Club[] }) {
@@ -39,7 +40,11 @@ export function ClubsSection({ clubs }: { clubs: Club[] }) {
               <h3 className="mt-3 font-display text-xl font-semibold tracking-tight group-hover:text-brand">
                 {club.name}
               </h3>
-              <p className="mt-3 text-sm text-muted-foreground">{club._count.members}명</p>
+              {plainTextFromHtml(club.description ?? "").trim() ? (
+                <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">
+                  {plainTextFromHtml(club.description ?? "")}
+                </p>
+              ) : null}
             </Link>
           </FadeIn>
         ))}

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { createMetadata } from "@/lib/seo";
 import { prisma } from "@/lib/prisma";
 
@@ -41,7 +42,7 @@ export default async function ActivityReportDetailPage({
         backHref="/about/reports"
       />
       <div className="mx-auto max-w-3xl px-4 py-12 md:px-6">
-        <p className="whitespace-pre-wrap leading-relaxed text-foreground">{report.content}</p>
+        <RichHtmlBody content={report.content} />
         {report.fileUrl ? (
           <Link
             href={report.fileUrl}

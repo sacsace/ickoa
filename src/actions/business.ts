@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { resolveMapsUrlCoords } from "@/lib/google-maps-url";
+import { getSiteUser } from "@/lib/session-kind";
+import { canManageSiteResource } from "@/lib/site-permissions";
 
 function normalizeWebsite(value?: string) {
   const trimmed = value?.trim();
@@ -96,15 +98,16 @@ async function prepareOwnedBusinessData(data: BusinessPayload) {
 
 async function requireBusinessOwner(businessId: string) {
   const session = await auth();
-  if (!session?.user?.id) {
+  const siteUser = getSiteUser(session);
+  if (!siteUser) {
     throw new Error("로그인이 필요합니다.");
   }
   const business = await prisma.business.findUnique({ where: { id: businessId } });
   if (!business) throw new Error("기업을 찾을 수 없습니다.");
-  if (business.ownerId !== session.user.id) {
+  if (!canManageSiteResource(siteUser, business.ownerId)) {
     throw new Error("본인이 등록한 기업만 수정·삭제할 수 있습니다.");
   }
-  return { session, business };
+  return { session, business, siteUser };
 }
 
 export async function submitBusiness(data: BusinessPayload) {

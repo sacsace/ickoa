@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { AdminDonationsDetail } from "@/components/admin/admin-donations-detail";
+import { adminHasRole } from "@/lib/session-kind";
 
 export const dynamic = "force-dynamic";
 
@@ -11,7 +12,7 @@ export default async function AdminDonationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await auth();
-  if (!session?.user || !["SUPER_ADMIN", "CONTENT_ADMIN"].includes(session.user.role)) {
+  if (!adminHasRole(session, ["SUPER_ADMIN", "CONTENT_ADMIN"])) {
     notFound();
   }
 

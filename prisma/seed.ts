@@ -71,6 +71,7 @@ async function main() {
     { name: "통신사", nameEn: "Telecom", slug: "telecom", order: 8 },
     { name: "게스트하우스", nameEn: "Guesthouse", slug: "guesthouse", order: 9 },
     { name: "음식점", nameEn: "Restaurant", slug: "restaurant", order: 10 },
+    { name: "통역원", nameEn: "Interpreters", slug: "interpreter", order: 11 },
   ];
   for (const cat of guideCategories) {
     await prisma.guideCategory.upsert({

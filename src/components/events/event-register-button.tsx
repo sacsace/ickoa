@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
+import { useAlert } from "@/components/providers/alert-provider";
 import { isSiteSession } from "@/lib/session-kind";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +20,7 @@ export function EventRegisterButton({
   ended?: boolean;
 }) {
   const pathname = usePathname();
+  const alert = useAlert();
   const { data: session, status } = useSession();
   const allowed = isSiteSession(session);
   const [loading, setLoading] = useState(false);
@@ -41,7 +43,13 @@ export function EventRegisterButton({
 
     const data = await res.json();
     if (data.qrDataUrl) setQrDataUrl(data.qrDataUrl);
-    else if (data.error) alert(data.error);
+    else if (data.error) {
+      await alert({
+        title: "참가 신청 실패",
+        message: String(data.error),
+        variant: "error",
+      });
+    }
   }
 
   if (ended) {

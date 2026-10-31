@@ -6,7 +6,9 @@ import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { ContentEditor } from "@/components/community/content-editor";
 import { createNews, updateNews } from "@/actions/admin";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 type NewsFormProps = {
   initial?: {
@@ -34,6 +36,10 @@ export function AdminNewsForm({ initial }: NewsFormProps) {
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!form.title.trim() || !plainTextFromHtml(form.content)) {
+      setError("제목과 내용을 입력해 주세요.");
+      return;
+    }
     const payload = {
       title: form.title,
       content: form.content,
@@ -78,12 +84,11 @@ export function AdminNewsForm({ initial }: NewsFormProps) {
 
         <div>
           <label className="mb-1 block text-xs text-muted-foreground">내용 *</label>
-          <textarea
+          <ContentEditor
             value={form.content}
-            onChange={(e) => setForm({ ...form, content: e.target.value })}
-            rows={12}
-            className="w-full border border-border bg-background px-4 py-3 text-sm leading-relaxed"
-            required
+            onChange={(content) => setForm({ ...form, content })}
+            placeholder="뉴스 내용을 입력하세요"
+            minHeight={320}
           />
         </div>
 

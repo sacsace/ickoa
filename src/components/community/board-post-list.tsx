@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
+import { useAlert } from "@/components/providers/alert-provider";
 import { AuthWriteLink } from "@/components/ui/auth-write-link";
 import { deleteOwnPost } from "@/actions/community";
 
@@ -35,12 +36,15 @@ export function BoardPostList({
   boardSlug,
   posts,
   currentUserId,
+  manageAll = false,
 }: {
   boardSlug: string;
   posts: BoardPostItem[];
   currentUserId?: string | null;
+  manageAll?: boolean;
 }) {
   const router = useRouter();
+  const alert = useAlert();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<BoardPostItem | null>(null);
 
@@ -74,7 +78,9 @@ export function BoardPostList({
           </thead>
           <tbody>
             {posts.map((post, index) => {
-              const canManage = !!currentUserId && post.author.id === currentUserId;
+              const canManage =
+                manageAll ||
+                (!!currentUserId && post.author.id === currentUserId);
               const authorLabel = shortAuthorName(post.author.name);
               return (
                 <tr
@@ -161,8 +167,12 @@ export function BoardPostList({
               setDeleteTarget(null);
               router.refresh();
             } catch {
-              alert("삭제 권한이 없거나 로그인 상태가 아닙니다.");
               setDeleteTarget(null);
+              await alert({
+                title: "삭제 실패",
+                message: "삭제 권한이 없거나 로그인 상태가 아닙니다.",
+                variant: "error",
+              });
             }
           });
         }}

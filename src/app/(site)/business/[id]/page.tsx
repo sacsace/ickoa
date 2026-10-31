@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { MapPin, Phone, Globe } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
+import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { prisma } from "@/lib/prisma";
 import { createMetadata, truncateDescription } from "@/lib/seo";
 
@@ -64,11 +65,14 @@ export default async function BusinessDetailPage({
           )}
         </div>
 
-        {business.description && (
-          <p className="mt-6 leading-relaxed text-muted-foreground">
-            {business.description}
-          </p>
-        )}
+        {business.description ? (
+          <div className="mt-6">
+            <RichHtmlBody
+              content={business.description}
+              className="leading-relaxed text-muted-foreground"
+            />
+          </div>
+        ) : null}
       </div>
     </>
   );

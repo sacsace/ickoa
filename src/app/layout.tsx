@@ -3,6 +3,7 @@ import { Noto_Sans_KR } from "next/font/google";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LocaleProvider } from "@/components/providers/locale-provider";
 import { AuthProvider } from "@/components/providers/session-provider";
+import { AlertProvider } from "@/components/providers/alert-provider";
 import { rootMetadata } from "@/lib/seo";
 import "./globals.css";
 
@@ -30,7 +31,9 @@ export default function RootLayout({
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <ThemeProvider>
           <AuthProvider>
-            <LocaleProvider>{children}</LocaleProvider>
+            <LocaleProvider>
+              <AlertProvider>{children}</AlertProvider>
+            </LocaleProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>
