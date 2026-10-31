@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn, useSession } from "next-auth/react";
+import { getSession, signIn, useSession } from "next-auth/react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { isSiteSession } from "@/lib/session-kind";
+import { isAdminSession, isSiteSession } from "@/lib/session-kind";
 
 function safeCallback(callbackUrl: string | null) {
   if (
@@ -23,17 +23,39 @@ export default function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
-  const { data: session, status } = useSession();
+  const { update } = useSession();
+  const redirected = useRef(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (status !== "authenticated") return;
-    if (!isSiteSession(session)) return;
-    router.replace(safeCallback(callbackUrl));
-  }, [status, session, callbackUrl, router]);
+    let cancelled = false;
+
+    async function syncAndMaybeRedirect() {
+      // 캐시된 클라이언트 세션이 서버와 어긋나면 /account ↔ /login 루프가 난다.
+      const fresh = await getSession();
+      if (cancelled || redirected.current) return;
+
+      const target = safeCallback(callbackUrl);
+      if (isSiteSession(fresh)) {
+        redirected.current = true;
+        router.replace(target);
+        return;
+      }
+      // 관리자만 로그인된 경우에도 /account 등은 서버에서 admin 폴백으로 허용
+      if (isAdminSession(fresh) && target === "/account") {
+        redirected.current = true;
+        router.replace(target);
+      }
+    }
+
+    void syncAndMaybeRedirect();
+    return () => {
+      cancelled = true;
+    };
+  }, [callbackUrl, router]);
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -56,6 +78,8 @@ export default function LoginForm() {
       return;
     }
 
+    await update();
+    redirected.current = true;
     router.replace(safeCallback(callbackUrl));
     router.refresh();
   }

@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { AccountForm } from "@/components/account/account-form";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getSiteUser } from "@/lib/session-kind";
+import { getAdminUser, getSiteUser } from "@/lib/session-kind";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -17,13 +17,14 @@ export const dynamic = "force-dynamic";
 
 export default async function AccountPage() {
   const session = await auth();
-  const siteUser = getSiteUser(session);
-  if (!siteUser) {
+  // 사이트 세션 우선, 없으면 관리자 세션으로 동일 계정 프로필 허용
+  const portalUser = getSiteUser(session) ?? getAdminUser(session);
+  if (!portalUser) {
     redirect(`/login?callbackUrl=${encodeURIComponent("/account")}`);
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: siteUser.id },
+    where: { id: portalUser.id },
     select: {
       name: true,
       nameEn: true,

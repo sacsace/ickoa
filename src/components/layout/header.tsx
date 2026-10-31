@@ -10,7 +10,11 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { LogoWithText } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { getSiteUser, isSiteSession } from "@/lib/session-kind";
+import {
+  getAdminUser,
+  getSiteUser,
+  isSiteSession,
+} from "@/lib/session-kind";
 import { signOutSite } from "@/lib/portal-signout";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
@@ -27,7 +31,7 @@ export function Header() {
   const { locale, setLocale, t } = useLocale();
   const { data: session, update } = useSession();
   const siteSession = isSiteSession(session);
-  const siteUser = getSiteUser(session);
+  const portalUser = getSiteUser(session) ?? getAdminUser(session);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -144,7 +148,7 @@ export function Header() {
             );
           })}
 
-          {siteSession ? (
+          {portalUser ? (
             <div
               className="ml-auto flex shrink-0 items-center gap-2 pr-2"
               onMouseEnter={() => setMegaOpen(false)}
@@ -155,9 +159,9 @@ export function Header() {
                 title="내 정보 수정"
               >
                 <span className="max-w-[140px] truncate">
-                  {siteUser?.name ?? "회원"}
+                  {portalUser.name ?? "회원"}
                 </span>
-                <UserAvatar src={siteUser?.image} name={siteUser?.name} />
+                <UserAvatar src={portalUser.image} name={portalUser.name} />
               </Link>
             </div>
           ) : null}

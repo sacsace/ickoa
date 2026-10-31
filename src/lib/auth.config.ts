@@ -271,8 +271,14 @@ export const authConfig = {
           role: (user as { role?: string }).role ?? "MEMBER",
           loginId: (user as { loginId?: string | null }).loginId ?? null,
         };
-        if (kind === "admin") assignAdmin(t, payload);
-        else assignSite(t, payload);
+        if (kind === "admin") {
+          // 관리자도 동일 계정으로 사이트 기능을 쓰므로 site 슬롯을 함께 채운다.
+          // (admin-only면 헤더는 로그인으로 보이는데 /account는 막혀 루프가 난다)
+          assignAdmin(t, payload);
+          assignSite(t, payload);
+        } else {
+          assignSite(t, payload);
+        }
       } else if (account && account.provider !== "credentials") {
         // OAuth는 사이트 세션
         if (t.id) {
