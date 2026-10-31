@@ -23,7 +23,7 @@ export function AdminClubsList({ items }: { items: Item[] }) {
         newHref: "/admin/clubs/new",
         editHref: (id) => `/admin/clubs/${id}`,
         writeLabel: "동호회 등록",
-        countLabel: "소개",
+        countLabel: "회원",
         onDelete: deleteClub,
       }}
     />

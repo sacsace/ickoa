@@ -33,7 +33,7 @@ type TaxonomyConfig = {
   editHref: (id: string) => string;
   writeLabel: string;
   countLabel: string;
-  onDelete: (id: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void | { error?: string }>;
 };
 
 export function AdminTaxonomyList({
@@ -157,7 +157,15 @@ export function AdminTaxonomyList({
       <AdminConfirmDialog
         open={deleteTarget !== null}
         title="삭제 확인"
-        description={deleteTarget ? `「${deleteTarget.name}」을(를) 삭제합니다.` : ""}
+        description={
+          deleteTarget
+            ? `「${deleteTarget.name}」을(를) 삭제합니다.${
+                deleteTarget.count > 0
+                  ? ` 관련 데이터(회원/게시 등 ${deleteTarget.count}건 포함)도 함께 삭제됩니다.`
+                  : ""
+              }`
+            : ""
+        }
         confirmLabel="삭제"
         destructive
         loading={isPending}
@@ -165,11 +173,17 @@ export function AdminTaxonomyList({
           if (!deleteTarget) return;
           startTransition(async () => {
             try {
-              await config.onDelete(deleteTarget.id);
+              const result = await config.onDelete(deleteTarget.id);
+              if (result && typeof result === "object" && result.error) {
+                setError(result.error);
+                setDeleteTarget(null);
+                return;
+              }
               setDeleteTarget(null);
               router.refresh();
-            } catch (err) {
-              setError(err instanceof Error ? err.message : "삭제에 실패했습니다.");
+            } catch {
+              // Production hides thrown Server Action messages — show a safe fallback.
+              setError("삭제에 실패했습니다. 잠시 후 다시 시도해 주세요.");
               setDeleteTarget(null);
             }
           });

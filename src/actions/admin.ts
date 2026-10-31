@@ -649,18 +649,24 @@ export async function updateClub(
 }
 
 export async function deleteClub(id: string) {
-  await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
-  const existing = await prisma.club.findUnique({ where: { id } });
-  if (!existing) throw new Error("Not found");
+  try {
+    await requireAdmin(["SUPER_ADMIN", "COMMUNITY_ADMIN", "CONTENT_ADMIN"]);
+    const existing = await prisma.club.findUnique({ where: { id } });
+    if (!existing) return { error: "동호회를 찾을 수 없습니다." };
 
-  const memberCount = await prisma.clubMember.count({ where: { clubId: id } });
-  if (memberCount > 0) {
-    throw new Error(`이 동호회에 회원 ${memberCount}명이 있어 삭제할 수 없습니다.`);
+    // Members/notices cascade via Prisma relations — admin delete is intentional.
+    await prisma.club.delete({ where: { id } });
+    revalidatePath("/clubs");
+    revalidatePath(`/clubs/${existing.slug}`);
+    revalidatePath("/admin/clubs");
+    return {};
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message === "Unauthorized"
+        ? "권한이 없습니다."
+        : "동호회 삭제에 실패했습니다.";
+    return { error: message };
   }
-
-  await prisma.club.delete({ where: { id } });
-  revalidatePath("/clubs");
-  revalidatePath("/admin/clubs");
 }
 
 export async function approveClubRequest(id: string) {
