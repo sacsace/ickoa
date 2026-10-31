@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 import { deletePost } from "@/actions/admin";
 
 type PostItem = {
@@ -19,11 +27,29 @@ export function AdminPostsList({ posts }: { posts: PostItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<PostItem | null>(null);
+  const getSearchText = useCallback(
+    (item: PostItem) =>
+      `${item.title} ${item.board.name} ${item.author.name ?? ""}`,
+    [],
+  );
+  const list = useAdminList(posts, getSearchText);
 
   return (
     <>
       <AdminPageHeader title="게시글" subtitle={`총 ${posts.length}건`} />
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="제목, 게시판, 작성자 검색..."
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -35,9 +61,16 @@ export function AdminPostsList({ posts }: { posts: PostItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {posts.map((item, index) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-3 text-center text-muted-foreground">{posts.length - index}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3">
                   <Link href={`/admin/posts/${item.id}`} className="font-medium hover:text-brand hover:underline">{item.title}</Link>
                 </td>
@@ -48,10 +81,21 @@ export function AdminPostsList({ posts }: { posts: PostItem[] }) {
                 </td>
               </tr>
             ))}
-            {posts.length === 0 && <AdminEmptyRow colSpan={5} message="게시글이 없습니다." />}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={5}
+                message={posts.length === 0 ? "게시글이 없습니다." : "검색 결과가 없습니다."}
+              />
+            )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
       <AdminConfirmDialog open={deleteTarget !== null} title="게시글 삭제" description={deleteTarget ? `「${deleteTarget.title}」 게시글을 삭제합니다.` : ""} confirmLabel="삭제" destructive loading={isPending} onConfirm={() => { if (!deleteTarget) return; startTransition(async () => { await deletePost(deleteTarget.id); setDeleteTarget(null); router.refresh(); }); }} onCancel={() => setDeleteTarget(null)} />
     </>
   );

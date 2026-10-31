@@ -2,10 +2,18 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
 import { deleteGuide } from "@/actions/admin";
 
@@ -15,21 +23,40 @@ export function AdminGuidesList({ guides }: { guides: GuideItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<GuideItem | null>(null);
+  const getSearchText = useCallback(
+    (item: GuideItem) => `${item.title} ${item.category} ${item.region}`,
+    [],
+  );
+  const list = useAdminList(guides, getSearchText);
 
   return (
     <>
       <AdminPageHeader title="생활 가이드" subtitle={`총 ${guides.length}건`} />
-      <div className="mb-4 flex flex-wrap items-center justify-end gap-2">
-        <Link href="/admin/guides/categories">
-          <Button size="sm" variant="outline">
-            카테고리 관리
-          </Button>
-        </Link>
-        <Link href="/admin/guides/new">
-          <Button size="sm">글쓰기</Button>
-        </Link>
-      </div>
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="제목, 카테고리, 지역 검색..."
+        actions={
+          <>
+            <Link href="/admin/guides/categories">
+              <Button size="sm" variant="outline">
+                카테고리 관리
+              </Button>
+            </Link>
+            <Link href="/admin/guides/new">
+              <Button size="sm">글쓰기</Button>
+            </Link>
+          </>
+        }
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -41,11 +68,21 @@ export function AdminGuidesList({ guides }: { guides: GuideItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {guides.map((item, index) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-3 text-center text-muted-foreground">{guides.length - index}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3">
-                  <Link href={`/admin/guides/${item.id}`} className="font-medium hover:text-brand hover:underline">
+                  <Link
+                    href={`/admin/guides/${item.id}`}
+                    className="font-medium hover:text-brand hover:underline"
+                  >
                     {item.title}
                   </Link>
                 </td>
@@ -63,14 +100,33 @@ export function AdminGuidesList({ guides }: { guides: GuideItem[] }) {
                 </td>
               </tr>
             ))}
-            {guides.length === 0 && <AdminEmptyRow colSpan={5} message="등록된 가이드가 없습니다." />}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={5}
+                message={
+                  guides.length === 0
+                    ? "등록된 가이드가 없습니다."
+                    : "검색 결과가 없습니다."
+                }
+              />
+            )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
       <AdminConfirmDialog
         open={deleteTarget !== null}
         title="가이드 삭제"
-        description={deleteTarget ? `「${deleteTarget.title}」 가이드를 삭제합니다. 삭제 후에는 복구할 수 없습니다.` : ""}
+        description={
+          deleteTarget
+            ? `「${deleteTarget.title}」 가이드를 삭제합니다. 삭제 후에는 복구할 수 없습니다.`
+            : ""
+        }
         confirmLabel="삭제"
         destructive
         loading={isPending}

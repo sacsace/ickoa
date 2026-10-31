@@ -93,17 +93,45 @@ model News {
 }
 
 model Business {
-  id        String  @id @default(cuid())
-  name      String
-  category  String
-  region    String
-  address   String
-  phone     String?
-  website   String?
-  lat       Float?
-  lng       Float?
-  description String?
-  ownerId   String?
+  id                  String   @id @default(cuid())
+  name                String
+  nameEn              String?
+  category            String
+  products            String?
+  region              String   @default("Chennai")
+  address             String
+  phone               String?
+  website             String?
+  parentCompany       String?
+  ceoName             String?
+  ceoTitle            String?
+  contactName         String?
+  contactTitle        String?
+  contactPhone        String?
+  contactEmail        String?
+  mapsUrl             String?
+  lat                 Float?
+  lng                 Float?
+  description         String?
+  ownerId             String?
+  hideParentCompany   Boolean  @default(false)
+  hideCeo             Boolean  @default(false)
+  hideContactPerson   Boolean  @default(false)
+  hideContactPhone    Boolean  @default(false)
+  hideContactEmail    Boolean  @default(false)
+  hideWebsite         Boolean  @default(false)
+  hideAddress         Boolean  @default(false)
+  hideMapsUrl         Boolean  @default(false)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model BusinessCategory {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  nameEn    String?
+  slug      String   @unique
+  order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

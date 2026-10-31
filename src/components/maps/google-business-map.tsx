@@ -23,13 +23,13 @@ export function GoogleBusinessMap({
   onSelect?: (id: string) => void;
   selectedId?: string;
 }) {
-  const withCoords = businesses.filter((b) => b.lat && b.lng);
+  const withCoords = businesses.filter((b) => b.lat != null && b.lng != null);
 
   if (!API_KEY) {
     return (
-      <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 lg:min-h-[480px]">
+      <div className="relative flex aspect-[16/10] items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-slate-800 to-slate-900 lg:min-h-[576px]">
         <div className="absolute inset-0 opacity-20" style={{
-          backgroundImage: "url('https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1200&q=80')",
+          backgroundImage: "url('/image/chennai-life-1.jpg')",
           backgroundSize: "cover",
         }} />
         {withCoords.map((biz, i) => (
@@ -59,7 +59,7 @@ export function GoogleBusinessMap({
           defaultCenter={CHENNAI_CENTER}
           defaultZoom={7}
           mapId="ickoa-business-map"
-          style={{ width: "100%", height: "480px" }}
+          style={{ width: "100%", height: "576px" }}
         >
           {withCoords.map((biz) => (
             <AdvancedMarker

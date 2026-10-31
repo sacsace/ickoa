@@ -5,8 +5,6 @@ import Link from "next/link";
 import { Search, MapPin, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { FadeIn, SectionHeader } from "@/components/ui/motion";
-import { businessCategories } from "@/data/mock";
-
 type Business = {
   id: string;
   name: string;
@@ -17,8 +15,10 @@ type Business = {
 
 export function BusinessDirectorySection({
   businesses,
+  categories = [],
 }: {
   businesses: Business[];
+  categories?: string[];
 }) {
   const { t } = useLocale();
   const [search, setSearch] = useState("");
@@ -51,7 +51,7 @@ export function BusinessDirectorySection({
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              {businessCategories.slice(0, 5).map((cat) => (
+              {categories.slice(0, 5).map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setCategory(category === cat ? null : cat)}

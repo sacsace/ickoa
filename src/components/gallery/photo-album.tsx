@@ -81,7 +81,13 @@ function Lightbox({
       </button>
       <div className="relative max-h-[85vh] w-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
         <div className="relative aspect-[16/10] w-full overflow-hidden rounded-2xl">
-          <Image src={photo.src} alt={photo.caption} fill className="object-contain" sizes="100vw" />
+          <Image
+            src={photo.src}
+            alt={photo.caption}
+            fill
+            className="object-contain"
+            sizes="(max-width:1024px) calc(100vw - 2rem), 1024px"
+          />
         </div>
         <p className="mt-4 text-center text-sm text-white/80">{photo.caption}</p>
       </div>

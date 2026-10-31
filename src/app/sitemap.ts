@@ -21,6 +21,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/guide",
     "/guide/guesthouse",
     "/guide/restaurants",
+    "/guide/c/guesthouse",
+    "/guide/c/restaurant",
     "/news",
     "/business",
     "/business/map",
@@ -33,11 +35,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ]),
   ]);
 
-  const [news, events, guides, magazines, albums, boards, clubs, businesses] =
+  const [news, events, guides, guideCategories, magazines, albums, boards, clubs, businesses] =
     await Promise.all([
       prisma.news.findMany({ select: { id: true, updatedAt: true } }),
       prisma.event.findMany({ select: { id: true, updatedAt: true } }),
       prisma.guide.findMany({ select: { id: true, updatedAt: true } }),
+      prisma.guideCategory.findMany({ select: { slug: true, updatedAt: true } }),
       prisma.magazineIssue.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
@@ -88,6 +91,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       lastModified: item.updatedAt,
       changeFrequency: "monthly",
       priority: 0.6,
+    });
+  }
+
+  for (const item of guideCategories) {
+    entries.push({
+      url: absoluteUrl(`/guide/c/${item.slug}`),
+      lastModified: item.updatedAt,
+      changeFrequency: "weekly",
+      priority: 0.65,
     });
   }
 

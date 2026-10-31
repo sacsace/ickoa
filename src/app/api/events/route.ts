@@ -30,6 +30,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
+  if (new Date(event.date).getTime() < Date.now()) {
+    return NextResponse.json({ error: "종료된 행사입니다." }, { status: 400 });
+  }
+
   if (event._count.registrations >= event.maxAttendees) {
     return NextResponse.json({ error: "Event is full" }, { status: 400 });
   }

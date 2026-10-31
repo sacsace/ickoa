@@ -57,6 +57,27 @@ export async function getGalleryAlbums(): Promise<GalleryAlbum[]> {
   }
 }
 
+/** 홈용 — 앨범 표지 위주, 사진 전체 로드 안 함 */
+export async function getGalleryAlbumPreviews(limit = 5): Promise<GalleryAlbum[]> {
+  try {
+    const albums = await prisma.galleryAlbum.findMany({
+      where: { published: true },
+      orderBy: { order: "asc" },
+      take: limit,
+      include: {
+        photos: {
+          orderBy: { order: "asc" },
+          take: 1,
+        },
+      },
+    });
+    if (albums.length === 0) return staticAlbums.slice(0, limit);
+    return albums.map(mapAlbum);
+  } catch {
+    return staticAlbums.slice(0, limit);
+  }
+}
+
 export async function getGalleryAlbumBySlug(slug: string): Promise<GalleryAlbum | null> {
   try {
     const album = await prisma.galleryAlbum.findUnique({

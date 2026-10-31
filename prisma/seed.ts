@@ -100,35 +100,35 @@ async function main() {
       content: "현대자동차 인도 스리페룸부두르 공장이 3번째 생산 라인 가동을 확대하며 남인도 자동차 산업 생태계에 새로운 활력을 불어넣고 있습니다.",
       category: "자동차",
       region: "Sri City",
-      image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80",
+      image: "/image/chennai-life-1.jpg",
     },
     {
       title: "타밀나두 주, 외국인 투자 인센티브 패키지 발표",
       content: "타밀나두 주정부가 외국인 직접투자(FDI) 유치를 위한 새로운 인센티브 패키지를 발표했습니다.",
       category: "정부 정책",
       region: "Tamil Nadu",
-      image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80",
+      image: "/image/chennai-life-2.jpg",
     },
     {
       title: "벵갈루루 IT 단지 한국 스타트업 입주 확대",
       content: "벵갈루루 IT 코ridor에 한국 스타트업들의 입주가 확대되고 있습니다.",
       category: "산업",
       region: "Bangalore",
-      image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+      image: "/image/hero-community.jpg",
     },
     {
       title: "인도 e-Visa 연장 절차 간소화 안내",
       content: "인도 이민국(FRRO)이 e-Visa 연장 절차를 간소화했습니다.",
       category: "비자",
       region: "Chennai",
-      image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
+      image: "/magazine/dynamic-korean-cover-vol17.png",
     },
     {
       title: "하이데라바드 반도체 클러스터 투자 확대",
       content: "하이데라바드 반도체 클러스터에 대규모 투자가 이어지고 있습니다.",
       category: "반도체",
       region: "Hyderabad",
-      image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80",
+      image: "/magazine/golf-tournament-2022.jpg",
     },
   ];
 
@@ -146,6 +146,36 @@ async function main() {
     { name: "LG Electronics India", category: "전자", region: "Sri City", address: "Sriperumbudur, Tamil Nadu", phone: "+91-44-4740-0000", website: "lg.com/in", lat: 12.975, lng: 79.94 },
   ];
 
+  const businessCategorySeeds = [
+    { name: "제조", nameEn: "Manufacturing", slug: "manufacturing", order: 1 },
+    { name: "IT", nameEn: "IT", slug: "it", order: 2 },
+    { name: "외식/숙박", nameEn: "Food & Lodging", slug: "food-lodging", order: 3 },
+    { name: "외식", nameEn: "Restaurant", slug: "restaurant", order: 4 },
+    { name: "건설/건축", nameEn: "Construction", slug: "construction", order: 5 },
+    { name: "건축/건설", nameEn: "Architecture & Construction", slug: "arch-construction", order: 6 },
+    { name: "무역/물류/유통", nameEn: "Trade & Logistics", slug: "trade-logistics", order: 7 },
+    { name: "물류", nameEn: "Logistics", slug: "logistics", order: 8 },
+    { name: "유통", nameEn: "Distribution", slug: "distribution", order: 9 },
+    { name: "금융", nameEn: "Finance", slug: "finance", order: 10 },
+    { name: "엔지니어링", nameEn: "Engineering", slug: "engineering", order: 11 },
+    { name: "기계/설비", nameEn: "Machinery", slug: "machinery", order: 12 },
+    { name: "컨설팅", nameEn: "Consulting", slug: "consulting", order: 13 },
+    { name: "서비스", nameEn: "Service", slug: "service", order: 14 },
+    { name: "R&D", nameEn: "R&D", slug: "rnd", order: 15 },
+    { name: "전기전자", nameEn: "Electronics", slug: "electronics", order: 16 },
+    { name: "여행사", nameEn: "Travel", slug: "travel", order: 17 },
+    { name: "교육 및 한국문화", nameEn: "Education & Culture", slug: "education", order: 18 },
+    { name: "종교", nameEn: "Religion", slug: "religion", order: 19 },
+    { name: "공관", nameEn: "Mission", slug: "mission", order: 20 },
+  ];
+  for (const cat of businessCategorySeeds) {
+    await prisma.businessCategory.upsert({
+      where: { slug: cat.slug },
+      update: { name: cat.name, nameEn: cat.nameEn, order: cat.order },
+      create: cat,
+    });
+  }
+
   const existingBiz = await prisma.business.count();
   if (existingBiz === 0) {
     await prisma.business.createMany({ data: businesses });
@@ -157,7 +187,7 @@ async function main() {
       description: "ECR 해변 리조트에서 열리는 한인회 여름 바베큐 파티입니다.",
       date: new Date("2026-07-12T17:00:00"),
       location: "ECR Beach Resort",
-      image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
+      image: "/magazine/golf-tournament-2022.jpg",
       maxAttendees: 120,
     },
     {
@@ -165,7 +195,7 @@ async function main() {
       description: "인도 체류를 시작하는 신규 주재원을 위한 필수 오리엔테이션.",
       date: new Date("2026-06-28T10:00:00"),
       location: "한인회관",
-      image: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80",
+      image: "/image/hero-community.jpg",
       maxAttendees: 50,
     },
     {
@@ -173,7 +203,7 @@ async function main() {
       description: "남인도 한인 기업 간 네트워킹 및 비즈니스 매칭 행사.",
       date: new Date("2026-08-05T14:00:00"),
       location: "ITC Grand Chola",
-      image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80",
+      image: "/image/golf-officials.jpg",
       maxAttendees: 100,
     },
   ];

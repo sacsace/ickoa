@@ -10,7 +10,7 @@ export const metadata = createMetadata({
   path: "/clubs",
 });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function ClubsPage() {
   const clubs = await getClubs();

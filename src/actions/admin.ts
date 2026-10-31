@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import bcrypt from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { resolveMapsUrlCoords } from "@/lib/google-maps-url";
 import type { Role } from "@prisma/client";
 
 const ADMIN_ROLES: Role[] = [
@@ -636,37 +637,180 @@ function parseOptionalFloat(value?: string) {
   return Number.isFinite(n) ? n : null;
 }
 
-export async function createBusiness(data: {
+export async function createBusinessCategory(data: {
   name: string;
+  nameEn?: string;
+  slug?: string;
+  order?: number;
+}) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const name = data.name.trim();
+  if (!name) throw new Error("업종 이름을 입력해 주세요.");
+  const slug = (data.slug?.trim() || slugifyTaxonomy(name) || `biz-${Date.now()}`).slice(0, 60);
+  const nameEn = data.nameEn?.trim() || null;
+  const order = Number.isFinite(data.order) ? Number(data.order) : 0;
+
+  const existing = await prisma.businessCategory.findFirst({
+    where: { OR: [{ name }, { slug }] },
+  });
+  if (existing) throw new Error("이미 같은 이름 또는 슬러그의 업종이 있습니다.");
+
+  const category = await prisma.businessCategory.create({
+    data: { name, nameEn, slug, order },
+  });
+  revalidatePath("/business");
+  revalidatePath("/admin/businesses");
+  revalidatePath("/admin/businesses/categories");
+  return category;
+}
+
+export async function updateBusinessCategory(
+  id: string,
+  data: { name: string; nameEn?: string; slug?: string; order?: number },
+) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const existing = await prisma.businessCategory.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
+  const name = data.name.trim();
+  if (!name) throw new Error("업종 이름을 입력해 주세요.");
+  const slug = (data.slug?.trim() || slugifyTaxonomy(name) || existing.slug).slice(0, 60);
+  const nameEn = data.nameEn?.trim() || null;
+  const order = Number.isFinite(data.order) ? Number(data.order) : existing.order;
+
+  const conflict = await prisma.businessCategory.findFirst({
+    where: { id: { not: id }, OR: [{ name }, { slug }] },
+  });
+  if (conflict) throw new Error("이미 같은 이름 또는 슬러그의 업종이 있습니다.");
+
+  const category = await prisma.businessCategory.update({
+    where: { id },
+    data: { name, nameEn, slug, order },
+  });
+
+  if (existing.name !== name) {
+    await prisma.business.updateMany({
+      where: { category: existing.name },
+      data: { category: name },
+    });
+  }
+
+  revalidatePath("/business");
+  revalidatePath("/admin/businesses");
+  revalidatePath("/admin/businesses/categories");
+  return category;
+}
+
+export async function deleteBusinessCategory(id: string) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const existing = await prisma.businessCategory.findUnique({ where: { id } });
+  if (!existing) throw new Error("Not found");
+
+  const businessCount = await prisma.business.count({
+    where: { category: existing.name },
+  });
+  if (businessCount > 0) {
+    throw new Error(`이 업종에 기업 ${businessCount}곳이 있어 삭제할 수 없습니다.`);
+  }
+
+  await prisma.businessCategory.delete({ where: { id } });
+  revalidatePath("/business");
+  revalidatePath("/admin/businesses");
+  revalidatePath("/admin/businesses/categories");
+}
+
+type BusinessInput = {
+  name: string;
+  nameEn?: string;
   category: string;
+  products?: string;
   region: string;
   address: string;
   phone?: string;
   website?: string;
+  parentCompany?: string;
+  ceoName?: string;
+  ceoTitle?: string;
+  contactName?: string;
+  contactTitle?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  mapsUrl?: string;
   lat?: string;
   lng?: string;
   description?: string;
-}) {
-  const session = await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  hideParentCompany?: boolean;
+  hideCeo?: boolean;
+  hideContactPerson?: boolean;
+  hideContactPhone?: boolean;
+  hideContactEmail?: boolean;
+  hideWebsite?: boolean;
+  hideAddress?: boolean;
+  hideMapsUrl?: boolean;
+};
+
+function normalizeBusinessMapsUrl(value?: string) {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+async function prepareBusinessData(data: BusinessInput) {
   const name = data.name.trim();
   const category = data.category.trim();
-  const region = data.region.trim();
+  const region = data.region.trim() || "Chennai";
   const address = data.address.trim();
-  if (!name || !category || !region || !address) {
-    throw new Error("기업명, 업종, 지역, 주소를 입력해 주세요.");
+  if (!name || !category || !address) {
+    throw new Error("한글 법인명, 업태, 주소를 입력해 주세요.");
   }
+  const contactPhone = data.contactPhone?.trim() || data.phone?.trim() || null;
+  const mapsUrl = normalizeBusinessMapsUrl(data.mapsUrl);
+  let lat = parseOptionalFloat(data.lat);
+  let lng = parseOptionalFloat(data.lng);
+  if ((lat == null || lng == null) && mapsUrl) {
+    const coords = await resolveMapsUrlCoords(mapsUrl);
+    lat = coords?.lat ?? null;
+    lng = coords?.lng ?? null;
+  }
+  return {
+    name,
+    nameEn: data.nameEn?.trim() || null,
+    category,
+    products: data.products?.trim() || null,
+    region,
+    address,
+    parentCompany: data.parentCompany?.trim() || null,
+    ceoName: data.ceoName?.trim() || null,
+    ceoTitle: data.ceoTitle?.trim() || null,
+    contactName: data.contactName?.trim() || null,
+    contactTitle: data.contactTitle?.trim() || null,
+    contactPhone,
+    contactEmail: data.contactEmail?.trim() || null,
+    phone: contactPhone,
+    website: data.website?.trim().replace(/^https?:\/\//, "") || null,
+    mapsUrl,
+    lat,
+    lng,
+    description: data.description?.trim() || data.products?.trim() || null,
+    hideParentCompany: !!data.hideParentCompany,
+    hideCeo: !!data.hideCeo,
+    hideContactPerson: !!data.hideContactPerson,
+    hideContactPhone: !!data.hideContactPhone,
+    hideContactEmail: !!data.hideContactEmail,
+    hideWebsite: !!data.hideWebsite,
+    hideAddress: !!data.hideAddress,
+    hideMapsUrl: !!data.hideMapsUrl,
+  };
+}
+
+export async function createBusiness(data: BusinessInput) {
+  const session = await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  const prepared = await prepareBusinessData(data);
 
   const business = await prisma.business.create({
     data: {
-      name,
-      category,
-      region,
-      address,
-      phone: data.phone?.trim() || null,
-      website: data.website?.trim().replace(/^https?:\/\//, "") || null,
-      lat: parseOptionalFloat(data.lat),
-      lng: parseOptionalFloat(data.lng),
-      description: data.description?.trim() || null,
+      ...prepared,
       ownerId: session.user.id,
     },
   });
@@ -676,45 +820,15 @@ export async function createBusiness(data: {
   return business;
 }
 
-export async function updateBusiness(
-  id: string,
-  data: {
-    name: string;
-    category: string;
-    region: string;
-    address: string;
-    phone?: string;
-    website?: string;
-    lat?: string;
-    lng?: string;
-    description?: string;
-  },
-) {
+export async function updateBusiness(id: string, data: BusinessInput) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
   const existing = await prisma.business.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
 
-  const name = data.name.trim();
-  const category = data.category.trim();
-  const region = data.region.trim();
-  const address = data.address.trim();
-  if (!name || !category || !region || !address) {
-    throw new Error("기업명, 업종, 지역, 주소를 입력해 주세요.");
-  }
-
+  const prepared = await prepareBusinessData(data);
   const business = await prisma.business.update({
     where: { id },
-    data: {
-      name,
-      category,
-      region,
-      address,
-      phone: data.phone?.trim() || null,
-      website: data.website?.trim().replace(/^https?:\/\//, "") || null,
-      lat: parseOptionalFloat(data.lat),
-      lng: parseOptionalFloat(data.lng),
-      description: data.description?.trim() || null,
-    },
+    data: prepared,
   });
   revalidatePath("/business");
   revalidatePath(`/business/${id}`);
@@ -731,6 +845,110 @@ export async function deleteBusiness(id: string) {
   revalidatePath("/business");
   revalidatePath("/");
   revalidatePath("/admin/businesses");
+}
+
+export type BusinessBulkRow = {
+  name: string;
+  category: string;
+  region: string;
+  address: string;
+  phone?: string;
+  website?: string;
+  lat?: string;
+  lng?: string;
+  description?: string;
+};
+
+export async function createBusinessesBulk(rows: BusinessBulkRow[]) {
+  const session = await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN", "COMMUNITY_ADMIN"]);
+  if (!Array.isArray(rows) || rows.length === 0) {
+    throw new Error("등록할 기업이 없습니다.");
+  }
+  if (rows.length > 500) {
+    throw new Error("한 번에 최대 500곳까지 등록할 수 있습니다.");
+  }
+
+  const prepared: {
+    name: string;
+    category: string;
+    region: string;
+    address: string;
+    phone: string | null;
+    website: string | null;
+    lat: number | null;
+    lng: number | null;
+    description: string | null;
+    ownerId: string;
+  }[] = [];
+  const errors: string[] = [];
+  const seen = new Set<string>();
+
+  rows.forEach((row, index) => {
+    const line = index + 2; // header + 1-based
+    const name = String(row.name ?? "").trim();
+    const category = String(row.category ?? "").trim();
+    const region = String(row.region ?? "").trim();
+    const address = String(row.address ?? "").trim();
+    if (!name || !category || !region || !address) {
+      errors.push(`${line}행: 기업명·업종·지역·주소는 필수입니다.`);
+      return;
+    }
+    const key = `${name.toLowerCase()}|${address.toLowerCase()}`;
+    if (seen.has(key)) {
+      errors.push(`${line}행: 파일 안에 같은 기업명·주소가 중복됩니다.`);
+      return;
+    }
+    seen.add(key);
+    prepared.push({
+      name,
+      category,
+      region,
+      address,
+      phone: String(row.phone ?? "").trim() || null,
+      website: String(row.website ?? "").trim().replace(/^https?:\/\//, "") || null,
+      lat: parseOptionalFloat(row.lat),
+      lng: parseOptionalFloat(row.lng),
+      description: String(row.description ?? "").trim() || null,
+      ownerId: session.user.id,
+    });
+  });
+
+  if (prepared.length === 0) {
+    throw new Error(errors[0] || "유효한 행이 없습니다.");
+  }
+
+  const existing = await prisma.business.findMany({
+    where: {
+      OR: prepared.map((p) => ({ name: p.name, address: p.address })),
+    },
+    select: { name: true, address: true },
+  });
+  const existingKeys = new Set(
+    existing.map((e) => `${e.name.toLowerCase()}|${e.address.toLowerCase()}`),
+  );
+
+  const toCreate = prepared.filter((p) => {
+    const key = `${p.name.toLowerCase()}|${p.address.toLowerCase()}`;
+    if (existingKeys.has(key)) {
+      errors.push(`건너뜀: 이미 등록된 「${p.name}」`);
+      return false;
+    }
+    return true;
+  });
+
+  if (toCreate.length > 0) {
+    await prisma.business.createMany({ data: toCreate });
+  }
+
+  revalidatePath("/business");
+  revalidatePath("/");
+  revalidatePath("/admin/businesses");
+
+  return {
+    created: toCreate.length,
+    skipped: prepared.length - toCreate.length,
+    errors: errors.slice(0, 20),
+  };
 }
 
 export async function deletePost(postId: string) {

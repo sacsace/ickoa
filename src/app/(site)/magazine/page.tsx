@@ -6,7 +6,7 @@ import { getPublishedMagazineIssues } from "@/lib/magazine-data";
 import { magazineMeta } from "@/data/dynamic-korean";
 import { createMetadata } from "@/lib/seo";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata = createMetadata({
   title: "다이나믹 코리안",

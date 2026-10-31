@@ -1,7 +1,14 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
+import { GuideBody } from "@/components/guide/guide-body";
+import { GuideDeleteButton } from "@/components/guide/guide-delete-button";
+import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { createMetadata, truncateDescription } from "@/lib/seo";
+import { guideListPath, guideWriteLabel } from "@/data/guide";
+import { plainTextFromHtml } from "@/lib/sanitize-html";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +24,7 @@ export async function generateMetadata({
   }
   return createMetadata({
     title: guide.title,
-    description: truncateDescription(guide.content),
+    description: truncateDescription(plainTextFromHtml(guide.content)),
     path: `/guide/${id}`,
   });
 }
@@ -28,22 +35,57 @@ export default async function GuideDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const guide = await prisma.guide.findUnique({ where: { id } });
+  const [guide, session] = await Promise.all([
+    prisma.guide.findUnique({ where: { id } }),
+    auth(),
+  ]);
   if (!guide) notFound();
+
+  const categoryMeta = await prisma.guideCategory.findUnique({
+    where: { name: guide.category },
+    select: { slug: true },
+  });
+  const backHref = guideListPath(guide.category, categoryMeta?.slug);
+  const canManage =
+    !!session?.user?.id && guide.createdById === session.user.id;
 
   return (
     <>
-      <PageHeader title={guide.title} backHref="/guide" />
-      <article className="mx-auto max-w-3xl px-4 py-12 md:px-6">
-        <div className="mb-4 flex gap-2">
-          <span className="rounded-lg bg-muted px-3 py-1 text-xs text-muted-foreground">
-            {guide.category}
-          </span>
-          <span className="text-xs text-muted-foreground">{guide.region}</span>
+      <PageHeader title={guide.title} backHref={backHref} />
+      <article className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex gap-2">
+            <span className="rounded-lg bg-muted px-3 py-1 text-xs text-muted-foreground">
+              {guideWriteLabel(guide.category)}
+            </span>
+            <span className="self-center text-xs text-muted-foreground">
+              {guide.region}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            {canManage ? (
+              <>
+                <Link href={`/guide/${guide.id}/edit`}>
+                  <Button type="button" variant="outline" size="sm">
+                    수정
+                  </Button>
+                </Link>
+                <GuideDeleteButton
+                  guideId={guide.id}
+                  title={guide.title}
+                  category={guide.category}
+                  categorySlug={categoryMeta?.slug}
+                />
+              </>
+            ) : null}
+            <Link href={backHref}>
+              <Button type="button" variant="outline" size="sm">
+                목록
+              </Button>
+            </Link>
+          </div>
         </div>
-        <p className="whitespace-pre-wrap leading-relaxed text-foreground">
-          {guide.content}
-        </p>
+        <GuideBody content={guide.content} />
       </article>
     </>
   );

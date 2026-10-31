@@ -172,12 +172,12 @@ export function Header() {
             className="site-header-panel absolute inset-x-0 top-full hidden border-b lg:block"
             onMouseEnter={() => setMegaOpen(true)}
           >
-            <div className="mx-auto grid max-w-[1356px] grid-cols-4 gap-6 px-4 py-6 xl:grid-cols-8">
+            <div className="mx-auto flex max-w-[1356px] flex-nowrap gap-2 px-4 py-6 xl:gap-3">
               {mainNavigation.map((item) => (
-                <div key={item.key}>
+                <div key={item.key} className="min-w-0 flex-1">
                   <Link
                     href={item.href}
-                    className="text-sm font-bold hover:text-brand"
+                    className="block truncate text-[13px] font-bold hover:text-brand xl:text-sm"
                     onClick={() => setMegaOpen(false)}
                   >
                     {getNavLabel(item, locale)}
@@ -187,7 +187,7 @@ export function Header() {
                       <li key={child.id}>
                         <Link
                           href={child.href}
-                          className="block text-[13px] text-muted-foreground hover:text-brand"
+                          className="block text-[12px] leading-snug text-muted-foreground hover:text-brand xl:text-[13px]"
                           onClick={() => setMegaOpen(false)}
                         >
                           {getNavChildLabel(child, locale)}

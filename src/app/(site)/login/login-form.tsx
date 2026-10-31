@@ -79,6 +79,7 @@ export default function LoginForm() {
               placeholder="member@ickoa.org"
               autoComplete="username"
               required
+              suppressHydrationWarning
             />
           </div>
           <div>
@@ -90,6 +91,7 @@ export default function LoginForm() {
               className="h-11 w-full rounded-xl border border-border bg-card px-4 text-sm outline-none focus:border-brand/50"
               autoComplete="current-password"
               required
+              suppressHydrationWarning
             />
           </div>
           {error && <p className="text-sm text-brand">{error}</p>}

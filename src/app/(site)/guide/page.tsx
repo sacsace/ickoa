@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/ui/page-header";
-import { GuideGrid } from "@/components/guide/guide-grid";
+import { GuideCategoryGrid } from "@/components/guide/guide-category-grid";
 import { GuideTopicNav } from "@/components/guide/guide-topic-nav";
-import { getGuides } from "@/lib/data";
+import { getGuideCategories } from "@/lib/data";
 import { createMetadata } from "@/lib/seo";
 
 export const metadata = createMetadata({
@@ -10,17 +10,20 @@ export const metadata = createMetadata({
   path: "/guide",
 });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function GuidePage() {
-  const guides = await getGuides();
+  const categories = await getGuideCategories();
 
   return (
     <>
-      <PageHeader title="첸나이 생활 가이드" subtitle="신규 주재원을 위한 필수 정착 정보" />
+      <PageHeader
+        title="첸나이 생활 가이드"
+        subtitle="카테고리를 선택하면 세부 안내를 확인할 수 있습니다"
+      />
       <div className="mx-auto max-w-7xl px-4 py-12 md:px-6 lg:px-8">
-        <GuideTopicNav activeHref="/guide" />
-        <GuideGrid guides={guides} />
+        <GuideTopicNav categories={categories} />
+        <GuideCategoryGrid categories={categories} />
       </div>
     </>
   );

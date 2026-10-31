@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
-import { AdminEmptyRow, AdminWriteLink } from "@/components/admin/admin-board-ui";
+import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
+import { Button } from "@/components/ui/button";
 import { deleteMagazineIssue } from "@/actions/admin";
 
 type MagazineItem = {
@@ -20,12 +29,33 @@ export function AdminMagazineList({ issues }: { issues: MagazineItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<MagazineItem | null>(null);
+  const getSearchText = useCallback(
+    (item: MagazineItem) => `${item.title} Vol.${item.volume} ${item.publishedAt}`,
+    [],
+  );
+  const list = useAdminList(issues, getSearchText);
 
   return (
     <>
       <AdminPageHeader title="한인회보" subtitle={`총 ${issues.length}건`} />
-      <AdminWriteLink href="/admin/magazine/new" label="호 등록" />
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="제목, 호수, 발행월 검색..."
+        actions={
+          <Link href="/admin/magazine/new">
+            <Button size="sm">호 등록</Button>
+          </Link>
+        }
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[600px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -38,9 +68,16 @@ export function AdminMagazineList({ issues }: { issues: MagazineItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {issues.map((item, index) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-3 text-center text-muted-foreground">{issues.length - index}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3 text-center text-muted-foreground">Vol.{item.volume}</td>
                 <td className="px-3 py-3">
                   <Link href={`/admin/magazine/${item.id}`} className="font-medium hover:text-brand hover:underline">{item.title}</Link>
@@ -52,10 +89,23 @@ export function AdminMagazineList({ issues }: { issues: MagazineItem[] }) {
                 </td>
               </tr>
             ))}
-            {issues.length === 0 && <AdminEmptyRow colSpan={6} message="등록된 한인회보가 없습니다." />}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={6}
+                message={
+                  issues.length === 0 ? "등록된 한인회보가 없습니다." : "검색 결과가 없습니다."
+                }
+              />
+            )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
       <AdminConfirmDialog open={deleteTarget !== null} title="한인회보 삭제" description={deleteTarget ? `Vol.${deleteTarget.volume} 한인회보를 삭제합니다.` : ""} confirmLabel="삭제" destructive loading={isPending} onConfirm={() => { if (!deleteTarget) return; startTransition(async () => { await deleteMagazineIssue(deleteTarget.id); setDeleteTarget(null); router.refresh(); }); }} onCancel={() => setDeleteTarget(null)} />
     </>
   );

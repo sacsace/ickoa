@@ -2,10 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminBackLink, AdminEmptyRow, AdminWriteLink } from "@/components/admin/admin-board-ui";
+import { AdminBackLink, AdminEmptyRow } from "@/components/admin/admin-board-ui";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
 
 type TaxonomyItem = {
@@ -40,15 +47,37 @@ export function AdminTaxonomyList({
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<TaxonomyItem | null>(null);
   const [error, setError] = useState("");
+  const getSearchText = useCallback(
+    (item: TaxonomyItem) =>
+      `${item.name} ${item.nameEn ?? ""} ${item.slug} ${item.extra ?? ""}`,
+    [],
+  );
+  const list = useAdminList(items, getSearchText);
 
   return (
     <>
       <AdminPageHeader title={config.title} subtitle={config.subtitle} />
       <AdminBackLink href={config.backHref} />
-      <AdminWriteLink href={config.newHref} label={config.writeLabel} />
       {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="이름, 영문, 슬러그 검색..."
+        actions={
+          <Link href={config.newHref}>
+            <Button size="sm">{config.writeLabel}</Button>
+          </Link>
+        }
+      />
 
-      <div className="overflow-x-auto border border-border">
+      <AdminTableShell>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -68,15 +97,16 @@ export function AdminTaxonomyList({
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
+            {list.visible.map((item) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
                 <td className="px-3 py-3 text-center text-muted-foreground">{item.order}</td>
-                <td className="px-3 py-3">
-                  <p className="font-medium">{item.name}</p>
+                <td className="max-w-[280px] truncate px-3 py-3">
+                  <span className="font-medium text-foreground">{item.name}</span>
                   {item.nameEn || item.extra ? (
-                    <p className="mt-0.5 text-xs text-muted-foreground">
+                    <span className="text-muted-foreground">
+                      {" · "}
                       {item.nameEn || item.extra}
-                    </p>
+                    </span>
                   ) : null}
                 </td>
                 <td className="px-3 py-3 text-center text-muted-foreground">{item.slug}</td>
@@ -104,12 +134,25 @@ export function AdminTaxonomyList({
                 </td>
               </tr>
             ))}
-            {items.length === 0 && (
-              <AdminEmptyRow colSpan={5} message="등록된 항목이 없습니다." />
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={5}
+                message={
+                  items.length === 0
+                    ? "등록된 항목이 없습니다."
+                    : "검색 결과가 없습니다."
+                }
+              />
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
 
       <AdminConfirmDialog
         open={deleteTarget !== null}

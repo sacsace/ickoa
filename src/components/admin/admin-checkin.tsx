@@ -39,7 +39,7 @@ export function AdminCheckinClient() {
             value={qrCode}
             onChange={(e) => setQrCode(e.target.value)}
             placeholder="QR 코드 UUID 입력"
-            className="h-11 w-full rounded-xl border border-border bg-background px-4 text-sm"
+            className="h-11 w-full rounded-sm border border-border bg-background px-4 text-sm"
             required
           />
           <Button type="submit" className="w-full" disabled={isPending}>

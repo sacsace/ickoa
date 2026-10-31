@@ -6,6 +6,7 @@ import { MapPin, ArrowRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { FadeIn, SectionHeader, SectionShell } from "@/components/ui/motion";
 import { Button } from "@/components/ui/button";
+import { isEventEnded } from "@/lib/event-status";
 
 type EventItem = {
   id: string;
@@ -19,7 +20,10 @@ type EventItem = {
 
 export function EventsSection({ events }: { events: EventItem[] }) {
   const { t } = useLocale();
-  const [featured, ...rest] = events;
+  const upcoming = events.filter((e) => !isEventEnded(e.date));
+  const list = upcoming.length > 0 ? upcoming : events;
+  const [featured, ...rest] = list;
+  const featuredEnded = featured ? isEventEnded(featured.date) : false;
 
   return (
     <SectionShell id="events" alt>
@@ -55,6 +59,7 @@ export function EventsSection({ events }: { events: EventItem[] }) {
             )}
             <div className="flex flex-col justify-center p-6 md:p-10">
               <p className="text-xs font-medium tracking-[0.12em] text-brand uppercase">
+                {featuredEnded ? "종료 · " : ""}
                 {featured.date.toLocaleDateString("ko-KR")}
               </p>
               <Link
@@ -72,9 +77,17 @@ export function EventsSection({ events }: { events: EventItem[] }) {
                   {featured._count.registrations}/{featured.maxAttendees}명 참가
                 </p>
               </div>
-              <Link href={`/events/${featured.id}`} className="mt-8">
-                <Button>{t.events.register}</Button>
-              </Link>
+              {featuredEnded ? (
+                <div className="mt-8">
+                  <Button variant="outline" disabled>
+                    종료된 행사
+                  </Button>
+                </div>
+              ) : (
+                <Link href={`/events/${featured.id}`} className="mt-8">
+                  <Button>{t.events.register}</Button>
+                </Link>
+              )}
             </div>
           </div>
         </FadeIn>

@@ -66,7 +66,13 @@ const sections: NavSection[] = [
   },
   {
     title: "한인 기업",
-    items: [{ href: "/admin/businesses", label: "디렉토리" }],
+    items: [
+      {
+        href: "/admin/businesses",
+        label: "디렉토리",
+        children: [{ href: "/admin/businesses/categories", label: "업종" }],
+      },
+    ],
   },
   {
     title: "커뮤니티",
@@ -102,6 +108,9 @@ function flattenNavItems(list: NavSection[]) {
   );
 }
 
+const FLAT_NAV_ITEMS = flattenNavItems(sections);
+const FLAT_NAV_HREFS = FLAT_NAV_ITEMS.map((item) => item.href);
+
 function isPathActive(pathname: string, href: string) {
   if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -129,13 +138,21 @@ function NavLink({
     <Link
       href={href}
       className={cn(
-        "block rounded-md py-1.5 text-sm transition-colors",
-        nested ? "px-2 pl-4 text-[13px]" : "px-2",
+        "relative block rounded-sm py-2 text-[13px] transition-colors",
+        nested ? "pl-5 pr-2" : "px-2.5",
         active
-          ? "bg-brand/10 font-medium text-brand"
-          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+          ? "bg-brand font-semibold text-white shadow-sm"
+          : "font-medium text-[#2a3544] hover:bg-white hover:text-[#111827]",
       )}
     >
+      {nested ? (
+        <span
+          className={cn(
+            "absolute left-2 top-1/2 h-1 w-1 -translate-y-1/2 rounded-full",
+            active ? "bg-white/80" : "bg-border",
+          )}
+        />
+      ) : null}
       {label}
     </Link>
   );
@@ -145,32 +162,36 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const adminSession = isAdminSession(session);
-  const allHrefs = flattenNavItems(sections).map((item) => item.href);
-  const activeHref = resolveActiveHref(pathname, allHrefs);
+  const activeHref = resolveActiveHref(pathname, FLAT_NAV_HREFS);
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      <header className="border-b border-border">
+    <div className="flex h-svh flex-col overflow-hidden bg-background">
+      <header
+        className="z-20 shrink-0 border-b border-[#152536]"
+        style={{ backgroundColor: "#1b2f44", color: "#ffffff" }}
+      >
         <div className="flex h-12 items-center justify-between px-4 md:px-6">
-          <span className="text-sm font-medium">KAIC 관리자</span>
+          <span className="text-sm font-semibold tracking-tight text-white">
+            KAIC 관리자
+          </span>
           <div className="flex items-center gap-4 text-sm">
             <Link
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-[#d7e2ec] transition-colors hover:text-white"
             >
               사이트 보기
             </Link>
             {adminSession && (
               <>
-                <span className="hidden text-muted-foreground md:inline">
+                <span className="hidden text-[#d7e2ec] md:inline">
                   {session!.user.name}
                 </span>
                 <button
                   type="button"
                   onClick={() => signOut({ callbackUrl: "/admin/login" })}
-                  className="text-muted-foreground hover:text-foreground"
+                  className="text-[#d7e2ec] transition-colors hover:text-white"
                 >
                   로그아웃
                 </button>
@@ -180,12 +201,15 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1">
-        <aside className="hidden w-52 shrink-0 border-r border-border md:block">
-          <nav className="divide-y divide-border p-3">
+      <div className="flex min-h-0 flex-1">
+        <aside className="hidden w-56 shrink-0 overflow-y-auto border-r border-border/80 bg-muted/40 md:block">
+          <nav className="space-y-4 p-3">
             {sections.map((section) => (
-              <div key={section.title} className="py-4 first:pt-1 last:pb-1">
-                <p className="mb-2 px-2 text-[11px] font-semibold tracking-wide text-muted-foreground/80">
+              <div
+                key={section.title}
+                className="rounded-sm border border-border/70 bg-white/70 p-2 shadow-sm"
+              >
+                <p className="mb-1.5 px-1.5 text-[10px] font-bold tracking-[0.08em] text-[#5b6573]">
                   {section.title}
                 </p>
                 <div className="space-y-0.5">
@@ -213,17 +237,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </nav>
         </aside>
 
-        <div className="min-w-0 flex-1">
-          <nav className="flex gap-2 overflow-x-auto border-b border-border px-4 py-2 text-sm md:hidden">
-            {flattenNavItems(sections).map((item) => (
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-slate-100">
+          <nav className="flex shrink-0 gap-2 overflow-x-auto border-b border-border bg-white px-4 py-2.5 text-sm md:hidden">
+            {FLAT_NAV_ITEMS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "shrink-0 whitespace-nowrap rounded-full px-3 py-1 transition-colors",
+                  "shrink-0 whitespace-nowrap rounded-sm px-3 py-1.5 text-[13px] font-medium transition-colors",
                   activeHref === item.href
-                    ? "bg-brand/10 font-medium text-brand"
-                    : "text-muted-foreground hover:text-foreground",
+                    ? "bg-brand text-white"
+                    : "bg-slate-50 text-foreground/80 ring-1 ring-border hover:text-foreground",
                 )}
               >
                 {item.label}
@@ -231,7 +255,13 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
-          <div className="p-4 md:p-6">{children}</div>
+          <main className="min-h-0 flex-1 overflow-y-auto">
+            <div className="p-4 md:p-6">
+              <div className="rounded-sm border border-border/80 bg-white p-4 shadow-sm md:p-6">
+                {children}
+              </div>
+            </div>
+          </main>
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import { auth } from "@/lib/auth";
 import { EventRegisterButton } from "@/components/events/event-register-button";
 import { EventDeleteButton } from "@/components/events/event-delete-button";
 import { createMetadata, truncateDescription } from "@/lib/seo";
+import { isEventEnded } from "@/lib/event-status";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ export default async function EventDetailPage({
 
   const canDelete =
     !!session?.user?.id && event.createdById === session.user.id;
+  const ended = isEventEnded(event.date);
 
   return (
     <>
@@ -60,11 +62,23 @@ export default async function EventDetailPage({
               className="object-cover"
               sizes="(max-width: 1356px) 100vw, 1356px"
             />
+            {ended ? (
+              <span className="absolute left-4 top-4 rounded bg-foreground/80 px-2.5 py-1 text-xs font-medium text-background">
+                종료된 행사
+              </span>
+            ) : null}
           </div>
         ) : null}
 
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border border-border bg-card px-4 py-3 text-sm">
           <div className="text-muted-foreground">
+            {ended ? (
+              <>
+                <span className="mr-2 rounded bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+                  종료
+                </span>
+              </>
+            ) : null}
             <span>{event.date.toLocaleString("ko-KR")}</span>
             <span className="mx-2">·</span>
             <span>{event.location}</span>
@@ -90,7 +104,7 @@ export default async function EventDetailPage({
         </div>
 
         <div className="mt-6 max-w-xs">
-          <EventRegisterButton eventId={event.id} />
+          <EventRegisterButton eventId={event.id} ended={ended} />
         </div>
       </div>
     </>

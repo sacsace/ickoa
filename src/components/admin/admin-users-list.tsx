@@ -1,12 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import type { Role } from "@prisma/client";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminEmptyRow, AdminWriteLink } from "@/components/admin/admin-board-ui";
+import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
 import { formatKoDateTime } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 
 const ADMIN_ROLES: Role[] = [
   "SUPER_ADMIN",
@@ -123,86 +131,109 @@ function MemberInfoDialog({
   );
 }
 
-function AdminUserTable({ users, startNo }: { users: UserItem[]; startNo: number }) {
-  return (
-    <table className="w-full min-w-[560px] border-collapse text-sm">
-      <thead>
-        <tr className="border-b border-border bg-muted/50">
-          <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">번호</th>
-          <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">이름</th>
-          <th className="w-40 px-3 py-2.5 text-center font-medium text-muted-foreground">계정</th>
-          <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">역할</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user, index) => (
-          <tr key={user.id} className="border-b border-border last:border-b-0">
-            <td className="px-3 py-3 text-center text-muted-foreground">{startNo - index}</td>
-            <td className="px-3 py-3">
-              <Link
-                href={`/admin/users/${user.id}`}
-                className="font-medium hover:text-brand hover:underline"
-              >
-                {user.name ?? "—"}
-              </Link>
-            </td>
-            <td className="px-3 py-3 text-center text-muted-foreground">
-              {user.loginId ? `@${user.loginId}` : user.email ?? "—"}
-            </td>
-            <td className="px-3 py-3 text-center text-muted-foreground">
-              {ROLE_LABELS[user.role]}
-            </td>
-          </tr>
-        ))}
-        {users.length === 0 && <AdminEmptyRow colSpan={4} message="목록이 비어 있습니다." />}
-      </tbody>
-    </table>
-  );
-}
-
-function MemberUserTable({
+function UserListSection({
+  title,
   users,
-  startNo,
+  linkMode,
   onSelect,
+  searchPlaceholder,
+  actions,
 }: {
+  title: string;
   users: UserItem[];
-  startNo: number;
-  onSelect: (user: UserItem) => void;
+  linkMode: "admin" | "member";
+  onSelect?: (user: UserItem) => void;
+  searchPlaceholder: string;
+  actions?: ReactNode;
 }) {
+  const getSearchText = useCallback(
+    (user: UserItem) =>
+      `${user.name ?? ""} ${user.loginId ?? ""} ${user.email ?? ""} ${ROLE_LABELS[user.role]}`,
+    [],
+  );
+  const list = useAdminList(users, getSearchText);
+
   return (
-    <table className="w-full min-w-[560px] border-collapse text-sm">
-      <thead>
-        <tr className="border-b border-border bg-muted/50">
-          <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">번호</th>
-          <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">이름</th>
-          <th className="w-40 px-3 py-2.5 text-center font-medium text-muted-foreground">계정</th>
-          <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">역할</th>
-        </tr>
-      </thead>
-      <tbody>
-        {users.map((user, index) => (
-          <tr key={user.id} className="border-b border-border last:border-b-0">
-            <td className="px-3 py-3 text-center text-muted-foreground">{startNo - index}</td>
-            <td className="px-3 py-3">
-              <button
-                type="button"
-                onClick={() => onSelect(user)}
-                className="font-medium text-left hover:text-brand hover:underline"
-              >
-                {user.name ?? "—"}
-              </button>
-            </td>
-            <td className="px-3 py-3 text-center text-muted-foreground">
-              {user.loginId ? `@${user.loginId}` : user.email ?? "—"}
-            </td>
-            <td className="px-3 py-3 text-center text-muted-foreground">
-              {ROLE_LABELS[user.role]}
-            </td>
-          </tr>
-        ))}
-        {users.length === 0 && <AdminEmptyRow colSpan={4} message="목록이 비어 있습니다." />}
-      </tbody>
-    </table>
+    <section className="mb-8 last:mb-0">
+      <h2 className="mb-3 text-sm font-medium">{title}</h2>
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder={searchPlaceholder}
+        actions={actions}
+      />
+      <AdminTableShell>
+        <table className="w-full min-w-[560px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">번호</th>
+              <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">이름</th>
+              <th className="w-40 px-3 py-2.5 text-center font-medium text-muted-foreground">계정</th>
+              <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">역할</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.visible.map((user, index) => (
+              <tr key={user.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
+                <td className="px-3 py-3">
+                  {linkMode === "admin" ? (
+                    <Link
+                      href={`/admin/users/${user.id}`}
+                      className="font-medium hover:text-brand hover:underline"
+                    >
+                      {user.name ?? "—"}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => onSelect?.(user)}
+                      className="font-medium text-left hover:text-brand hover:underline"
+                    >
+                      {user.name ?? "—"}
+                    </button>
+                  )}
+                </td>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {user.loginId ? `@${user.loginId}` : user.email ?? "—"}
+                </td>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {ROLE_LABELS[user.role]}
+                </td>
+              </tr>
+            ))}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={4}
+                message={
+                  users.length === 0 ? "목록이 비어 있습니다." : "검색 결과가 없습니다."
+                }
+              />
+            )}
+          </tbody>
+        </table>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
+    </section>
   );
 }
 
@@ -220,26 +251,26 @@ export function AdminUsersList({
   return (
     <>
       <AdminPageHeader title="회원" subtitle={`총 ${users.length}명`} />
-      {isSuperAdmin && <AdminWriteLink href="/admin/users/new" label="관리자 등록" />}
-
-      <section className="mb-8">
-        <h2 className="mb-3 text-sm font-medium">관리자 ({adminUsers.length})</h2>
-        <div className="overflow-x-auto border border-border">
-          <AdminUserTable users={adminUsers} startNo={adminUsers.length} />
-        </div>
-      </section>
-
-      <section>
-        <h2 className="mb-3 text-sm font-medium">일반 회원 ({memberUsers.length})</h2>
-        <div className="overflow-x-auto border border-border">
-          <MemberUserTable
-            users={memberUsers}
-            startNo={memberUsers.length}
-            onSelect={setSelected}
-          />
-        </div>
-      </section>
-
+      <UserListSection
+        title={`관리자 (${adminUsers.length})`}
+        users={adminUsers}
+        linkMode="admin"
+        searchPlaceholder="이름, 계정, 역할 검색..."
+        actions={
+          isSuperAdmin ? (
+            <Link href="/admin/users/new">
+              <Button size="sm">관리자 등록</Button>
+            </Link>
+          ) : undefined
+        }
+      />
+      <UserListSection
+        title={`일반 회원 (${memberUsers.length})`}
+        users={memberUsers}
+        linkMode="member"
+        onSelect={setSelected}
+        searchPlaceholder="이름, 계정 검색..."
+      />
       <MemberInfoDialog
         user={selected}
         open={selected !== null}

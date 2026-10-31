@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
-import { AdminEmptyRow, AdminWriteLink } from "@/components/admin/admin-board-ui";
+import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
+import { Button } from "@/components/ui/button";
 import { deleteBanner } from "@/actions/admin";
 
 type BannerItem = { id: string; title: string; active: boolean };
@@ -14,12 +23,30 @@ export function AdminBannersList({ banners }: { banners: BannerItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<BannerItem | null>(null);
+  const getSearchText = useCallback((item: BannerItem) => item.title, []);
+  const list = useAdminList(banners, getSearchText);
 
   return (
     <>
       <AdminPageHeader title="배너" subtitle={`총 ${banners.length}건`} />
-      <AdminWriteLink href="/admin/banners/new" label="배너 등록" />
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="제목 검색..."
+        actions={
+          <Link href="/admin/banners/new">
+            <Button size="sm">배너 등록</Button>
+          </Link>
+        }
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[520px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -30,9 +57,16 @@ export function AdminBannersList({ banners }: { banners: BannerItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {banners.map((item, index) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-3 text-center text-muted-foreground">{banners.length - index}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3">
                   <Link href={`/admin/banners/${item.id}`} className="font-medium hover:text-brand hover:underline">{item.title}</Link>
                 </td>
@@ -42,10 +76,23 @@ export function AdminBannersList({ banners }: { banners: BannerItem[] }) {
                 </td>
               </tr>
             ))}
-            {banners.length === 0 && <AdminEmptyRow colSpan={4} message="등록된 배너가 없습니다." />}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={4}
+                message={
+                  banners.length === 0 ? "등록된 배너가 없습니다." : "검색 결과가 없습니다."
+                }
+              />
+            )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
       <AdminConfirmDialog open={deleteTarget !== null} title="배너 삭제" description={deleteTarget ? `「${deleteTarget.title}」 배너를 삭제합니다.` : ""} confirmLabel="삭제" destructive loading={isPending} onConfirm={() => { if (!deleteTarget) return; startTransition(async () => { await deleteBanner(deleteTarget.id); setDeleteTarget(null); router.refresh(); }); }} onCancel={() => setDeleteTarget(null)} />
     </>
   );

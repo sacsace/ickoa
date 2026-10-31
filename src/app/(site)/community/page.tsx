@@ -20,7 +20,7 @@ export const metadata = createMetadata({
   path: "/community",
 });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const boardIcons: Record<string, LucideIcon> = {
   message: MessageSquare,

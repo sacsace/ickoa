@@ -73,6 +73,18 @@ export const mainNavigation: NavItem[] = [
     ],
   },
   {
+    key: "business",
+    href: "/business",
+    labelKo: "한인기업",
+    labelEn: "Business",
+    children: [
+      { id: "b-all", href: "/business", labelKo: "기업 디렉토리", labelEn: "Directory" },
+      { id: "b-map", href: "/business/map", labelKo: "지도로 보기", labelEn: "Map View" },
+      { id: "b-new", href: "/business/new", labelKo: "기업 등록", labelEn: "Register Business" },
+      { id: "b-mine", href: "/business?mine=1", labelKo: "내 등록 기업", labelEn: "My Listings" },
+    ],
+  },
+  {
     key: "guide",
     href: "/guide",
     labelKo: "생활가이드",

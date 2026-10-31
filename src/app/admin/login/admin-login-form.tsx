@@ -54,6 +54,7 @@ export default function AdminLoginForm() {
             className="h-10 w-full border border-border bg-background px-3 text-sm outline-none focus:border-foreground/30"
             autoComplete="off"
             required
+            suppressHydrationWarning
           />
         </div>
         <div>
@@ -66,6 +67,7 @@ export default function AdminLoginForm() {
               className="h-10 w-full border border-border bg-background px-3 pr-16 text-sm outline-none focus:border-foreground/30"
               autoComplete="current-password"
               required
+              suppressHydrationWarning
             />
             <button
               type="button"

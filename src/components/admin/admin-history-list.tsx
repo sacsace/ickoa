@@ -2,9 +2,17 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink, AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
 import { deleteHistoryEntry } from "@/actions/about";
 
@@ -20,30 +28,57 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const getSearchText = useCallback(
+    (item: HistoryItem) =>
+      `${item.year} ${item.title} ${item.description ?? ""}`,
+    [],
+  );
+  const list = useAdminList(items, getSearchText);
 
   return (
     <>
       <AdminPageHeader title="연혁" subtitle={`총 ${items.length}건`} />
       <AdminBackLink href="/admin/about" />
-      <div className="mb-4 flex justify-end">
-        <Link href="/admin/about/history/new">
-          <Button size="sm">연혁 추가</Button>
-        </Link>
-      </div>
-      <div className="overflow-x-auto border border-border">
-        <table className="w-full text-sm">
-          <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
-            <tr>
-              <th className="px-3 py-2">연도</th>
-              <th className="px-3 py-2">제목</th>
-              <th className="px-3 py-2">순서</th>
-              <th className="px-3 py-2 text-right">관리</th>
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="연도, 제목 검색..."
+        actions={
+          <Link href="/admin/about/history/new">
+            <Button size="sm">연혁 추가</Button>
+          </Link>
+        }
+      />
+      <AdminTableShell>
+        <table className="w-full min-w-[640px] border-collapse text-sm">
+          <thead>
+            <tr className="border-b border-border bg-muted/50">
+              <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">번호</th>
+              <th className="w-24 px-3 py-2.5 text-center font-medium text-muted-foreground">연도</th>
+              <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">제목</th>
+              <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">순서</th>
+              <th className="w-40 px-3 py-2.5 text-center font-medium text-muted-foreground">관리</th>
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
-              <tr key={item.id} className="border-t border-border">
-                <td className="px-3 py-3 font-medium">{item.year}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
+                <td className="px-3 py-3 text-center font-medium">{item.year}</td>
                 <td className="px-3 py-3">
                   <Link
                     href={`/admin/about/history/${item.id}`}
@@ -57,9 +92,9 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
                     </p>
                   ) : null}
                 </td>
-                <td className="px-3 py-3 text-muted-foreground">{item.order}</td>
-                <td className="px-3 py-3 text-right">
-                  <div className="inline-flex gap-2">
+                <td className="px-3 py-3 text-center text-muted-foreground">{item.order}</td>
+                <td className="px-3 py-3 text-center">
+                  <div className="inline-flex justify-center gap-2">
                     <Link href={`/admin/about/history/${item.id}`}>
                       <Button size="sm" variant="outline">
                         수정
@@ -84,12 +119,23 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
                 </td>
               </tr>
             ))}
-            {items.length === 0 && (
-              <AdminEmptyRow colSpan={4} message="등록된 연혁이 없습니다." />
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={5}
+                message={
+                  items.length === 0 ? "등록된 연혁이 없습니다." : "검색 결과가 없습니다."
+                }
+              />
             )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
     </>
   );
 }

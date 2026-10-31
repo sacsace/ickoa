@@ -39,7 +39,7 @@ export default async function AccountPage() {
   return (
     <>
       <PageHeader title="내 정보" subtitle="회원 정보를 확인하고 수정할 수 있습니다" />
-      <div className="mx-auto max-w-[720px] px-4 py-8 md:px-6">
+      <div className="mx-auto max-w-7xl px-4 py-8 md:px-6 lg:px-8">
         <AccountForm
           initial={{
             name: user.name ?? "",

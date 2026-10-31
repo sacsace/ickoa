@@ -12,9 +12,11 @@ import { cn } from "@/lib/utils";
 export function EventRegisterButton({
   eventId,
   className,
+  ended = false,
 }: {
   eventId: string;
   className?: string;
+  ended?: boolean;
 }) {
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -23,6 +25,7 @@ export function EventRegisterButton({
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   async function handleRegister() {
+    if (ended) return;
     setLoading(true);
     const res = await fetch("/api/events", {
       method: "POST",
@@ -39,6 +42,16 @@ export function EventRegisterButton({
     const data = await res.json();
     if (data.qrDataUrl) setQrDataUrl(data.qrDataUrl);
     else if (data.error) alert(data.error);
+  }
+
+  if (ended) {
+    return (
+      <div className={cn(className)}>
+        <Button size="sm" className="w-full" variant="outline" disabled>
+          종료된 행사
+        </Button>
+      </div>
+    );
   }
 
   if (!allowed) {

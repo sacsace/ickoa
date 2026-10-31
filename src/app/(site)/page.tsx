@@ -2,16 +2,17 @@ import { createMetadata, DEFAULT_DESCRIPTION, SITE_NAME, SITE_TAGLINE, SITE_TAGL
 import { PortalHome } from "@/components/sections/portal-home";
 import { getFeaturedMagazineIssue } from "@/lib/magazine-data";
 import { getActiveHeroSlides } from "@/lib/hero-data";
-import { getGalleryAlbums } from "@/lib/gallery-data";
+import { getGalleryAlbumPreviews } from "@/lib/gallery-data";
 import {
   getNews,
   getBoards,
   getEvents,
   getClubs,
-  getGuides,
+  getGuideCategories,
 } from "@/lib/data";
 
-export const dynamic = "force-dynamic";
+/** 공개 홈 — 요청마다 DB 전체 재조회하지 않음 */
+export const revalidate = 60;
 
 export const metadata = {
   ...createMetadata({
@@ -25,17 +26,25 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const [news, boards, events, clubs, guides, featuredMagazine, heroSlides, galleryAlbums] =
-    await Promise.all([
-      getNews(6),
-      getBoards(),
-      getEvents(),
-      getClubs(),
-      getGuides(),
-      getFeaturedMagazineIssue(),
-      getActiveHeroSlides(),
-      getGalleryAlbums(),
-    ]);
+  const [
+    news,
+    boards,
+    events,
+    clubs,
+    guideCategories,
+    featuredMagazine,
+    heroSlides,
+    galleryAlbums,
+  ] = await Promise.all([
+    getNews(6),
+    getBoards(8),
+    getEvents(6),
+    getClubs(8),
+    getGuideCategories(),
+    getFeaturedMagazineIssue(),
+    getActiveHeroSlides(),
+    getGalleryAlbumPreviews(5),
+  ]);
 
   return (
     <PortalHome
@@ -43,7 +52,7 @@ export default async function Home() {
       boards={boards}
       events={events}
       clubs={clubs}
-      guides={guides}
+      guideCategories={guideCategories}
       magazine={featuredMagazine}
       heroSlides={heroSlides}
       galleryAlbums={galleryAlbums}

@@ -1,8 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useCallback } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
 
 type ReportItem = {
   id: string;
@@ -13,10 +22,29 @@ type ReportItem = {
 };
 
 export function AdminReportsList({ reports }: { reports: ReportItem[] }) {
+  const getSearchText = useCallback(
+    (item: ReportItem) =>
+      `${item.post.title} ${item.reason} ${item.reporter.name ?? ""}`,
+    [],
+  );
+  const list = useAdminList(reports, getSearchText);
+
   return (
     <>
       <AdminPageHeader title="신고" subtitle={`총 ${reports.length}건`} />
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="게시글, 사유, 신고자 검색..."
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[600px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
@@ -28,9 +56,16 @@ export function AdminReportsList({ reports }: { reports: ReportItem[] }) {
             </tr>
           </thead>
           <tbody>
-            {reports.map((item, index) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
-                <td className="px-3 py-3 text-center text-muted-foreground">{reports.length - index}</td>
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3">
                   <Link href={`/admin/reports/${item.id}`} className="font-medium hover:text-brand hover:underline">{item.post.title}</Link>
                 </td>
@@ -39,10 +74,23 @@ export function AdminReportsList({ reports }: { reports: ReportItem[] }) {
                 <td className="px-3 py-3 text-center text-muted-foreground">{item.resolved ? "처리됨" : "대기"}</td>
               </tr>
             ))}
-            {reports.length === 0 && <AdminEmptyRow colSpan={5} message="신고 내역이 없습니다." />}
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={5}
+                message={
+                  reports.length === 0 ? "신고 내역이 없습니다." : "검색 결과가 없습니다."
+                }
+              />
+            )}
           </tbody>
         </table>
-      </div>
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
     </>
   );
 }

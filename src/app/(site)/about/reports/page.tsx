@@ -10,7 +10,7 @@ export const metadata = createMetadata({
   path: "/about/reports",
 });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function ActivityReportsListPage() {
   await ensureAboutDefaults();

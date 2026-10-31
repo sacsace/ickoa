@@ -3,9 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { Search } from "lucide-react";
-import { businessCategories } from "@/data/mock";
 
-export function BusinessSearch() {
+export function BusinessSearch({ categories }: { categories: string[] }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [q, setQ] = useState(searchParams.get("q") ?? "");
@@ -35,23 +34,28 @@ export function BusinessSearch() {
           onChange={(e) => setQ(e.target.value)}
           placeholder="기업명, 업종, 지역 검색..."
           className="h-12 w-full rounded-xl border border-border bg-card pl-11 pr-4 text-sm outline-none focus:border-foreground/30"
+          autoComplete="off"
+          suppressHydrationWarning
         />
       </form>
-      <div className="mt-4 flex flex-wrap gap-2">
-        {businessCategories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => filterCategory(cat)}
-            className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-              searchParams.get("category") === cat
-                ? "bg-foreground text-background"
-                : "bg-muted text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+      {categories.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => filterCategory(cat)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                searchParams.get("category") === cat
+                  ? "bg-foreground text-background"
+                  : "bg-muted text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

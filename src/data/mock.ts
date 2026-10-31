@@ -26,7 +26,7 @@ export const newsItems = [
     category: "자동차",
     region: "Sri City",
     date: "2026-06-10",
-    image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80",
+    image: "/image/chennai-life-1.jpg",
   },
   {
     id: 2,
@@ -34,7 +34,7 @@ export const newsItems = [
     category: "정부 정책",
     region: "Tamil Nadu",
     date: "2026-06-09",
-    image: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?w=800&q=80",
+    image: "/image/chennai-life-2.jpg",
   },
   {
     id: 3,
@@ -42,7 +42,7 @@ export const newsItems = [
     category: "산업",
     region: "Bangalore",
     date: "2026-06-08",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80",
+    image: "/image/hero-community.jpg",
   },
   {
     id: 4,
@@ -50,7 +50,7 @@ export const newsItems = [
     category: "비자",
     region: "Chennai",
     date: "2026-06-07",
-    image: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=800&q=80",
+    image: "/magazine/dynamic-korean-cover-vol17.png",
   },
   {
     id: 5,
@@ -58,7 +58,7 @@ export const newsItems = [
     category: "반도체",
     region: "Hyderabad",
     date: "2026-06-06",
-    image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&q=80",
+    image: "/magazine/golf-tournament-2022.jpg",
   },
 ];
 
@@ -114,6 +114,7 @@ export const dashboardCards = [
   },
 ];
 
+/** @deprecated DB BusinessCategory 사용. 시드/폴백용 */
 export const businessCategories = [
   "제조업",
   "물류",
@@ -123,6 +124,7 @@ export const businessCategories = [
   "병원",
   "식당",
   "학교",
+  "전자",
 ] as const;
 
 export const businesses = [
@@ -214,7 +216,7 @@ export const events = [
     location: "ECR Beach Resort",
     attendees: 85,
     maxAttendees: 120,
-    image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
+    image: "/magazine/golf-tournament-2022.jpg",
   },
   {
     id: 2,
@@ -223,7 +225,7 @@ export const events = [
     location: "한인회관",
     attendees: 32,
     maxAttendees: 50,
-    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?w=800&q=80",
+    image: "/image/hero-community.jpg",
   },
   {
     id: 3,
@@ -232,7 +234,7 @@ export const events = [
     location: "ITC Grand Chola",
     attendees: 67,
     maxAttendees: 100,
-    image: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&q=80",
+    image: "/image/golf-officials.jpg",
   },
 ];
 

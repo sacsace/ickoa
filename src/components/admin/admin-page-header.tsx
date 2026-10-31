@@ -6,8 +6,8 @@ export function AdminPageHeader({
   subtitle?: string;
 }) {
   return (
-    <div className="mb-8 border-b border-border pb-4">
-      <h1 className="text-lg font-semibold">{title}</h1>
+    <div className="mb-6 border-b border-border/80 pb-4">
+      <h1 className="text-lg font-semibold tracking-tight">{title}</h1>
       {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
     </div>
   );

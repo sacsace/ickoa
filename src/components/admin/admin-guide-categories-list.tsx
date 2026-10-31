@@ -2,10 +2,19 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { AdminBackLink, AdminEmptyRow, AdminWriteLink } from "@/components/admin/admin-board-ui";
+import { AdminBackLink, AdminEmptyRow } from "@/components/admin/admin-board-ui";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
+import {
+  AdminListControls,
+  AdminListPaginationFooter,
+  AdminTableShell,
+  ADMIN_TABLE_ROW_CLASS,
+  adminListRowNumber,
+  useAdminList,
+} from "@/components/admin/admin-list-controls";
+import { Button } from "@/components/ui/button";
 import { deleteGuideCategory } from "@/actions/admin";
 
 type CategoryItem = {
@@ -22,6 +31,12 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
   const [isPending, startTransition] = useTransition();
   const [deleteTarget, setDeleteTarget] = useState<CategoryItem | null>(null);
   const [error, setError] = useState("");
+  const getSearchText = useCallback(
+    (item: CategoryItem) =>
+      `${item.name} ${item.nameEn ?? ""} ${item.slug}`,
+    [],
+  );
+  const list = useAdminList(categories, getSearchText);
 
   return (
     <>
@@ -30,14 +45,31 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
         subtitle={`총 ${categories.length}개`}
       />
       <AdminBackLink href="/admin/guides" />
-      <AdminWriteLink href="/admin/guides/categories/new" label="카테고리 등록" />
-
       {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
-
-      <div className="overflow-x-auto border border-border">
+      <AdminListControls
+        query={list.query}
+        onQueryChange={list.setQuery}
+        viewMode={list.viewMode}
+        onViewModeChange={list.setViewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+        filteredCount={list.filteredCount}
+        totalCount={list.totalCount}
+        searchPlaceholder="이름, 영문, 슬러그 검색..."
+        actions={
+          <Link href="/admin/guides/categories/new">
+            <Button size="sm">카테고리 등록</Button>
+          </Link>
+        }
+      />
+      <AdminTableShell>
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
             <tr className="border-b border-border bg-muted/50">
+              <th className="w-16 px-3 py-2.5 text-center font-medium text-muted-foreground">
+                번호
+              </th>
               <th className="w-14 px-3 py-2.5 text-center font-medium text-muted-foreground">
                 순서
               </th>
@@ -57,8 +89,16 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
             </tr>
           </thead>
           <tbody>
-            {categories.map((item) => (
-              <tr key={item.id} className="border-b border-border last:border-b-0">
+            {list.visible.map((item, index) => (
+              <tr key={item.id} className={ADMIN_TABLE_ROW_CLASS}>
+                <td className="px-3 py-3 text-center text-muted-foreground">
+                  {adminListRowNumber(
+                    list.filteredCount,
+                    index,
+                    list.viewMode,
+                    list.page,
+                  )}
+                </td>
                 <td className="px-3 py-3 text-center text-muted-foreground">{item.order}</td>
                 <td className="px-3 py-3 font-medium">{item.name}</td>
                 <td className="px-3 py-3 text-center text-muted-foreground">
@@ -91,13 +131,25 @@ export function AdminGuideCategoriesList({ categories }: { categories: CategoryI
                 </td>
               </tr>
             ))}
-            {categories.length === 0 && (
-              <AdminEmptyRow colSpan={6} message="등록된 카테고리가 없습니다." />
+            {list.visible.length === 0 && (
+              <AdminEmptyRow
+                colSpan={7}
+                message={
+                  categories.length === 0
+                    ? "등록된 카테고리가 없습니다."
+                    : "검색 결과가 없습니다."
+                }
+              />
             )}
           </tbody>
         </table>
-      </div>
-
+      </AdminTableShell>
+      <AdminListPaginationFooter
+        viewMode={list.viewMode}
+        page={list.page}
+        totalPages={list.totalPages}
+        onPageChange={list.setPage}
+      />
       <AdminConfirmDialog
         open={deleteTarget !== null}
         title="카테고리 삭제"

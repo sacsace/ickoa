@@ -9,7 +9,7 @@ export const metadata = createMetadata({
   path: "/gallery",
 });
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export default async function GalleryPage() {
   const albums = await getGalleryAlbums();

@@ -21,6 +21,7 @@ import { HeroSlider } from "@/components/sections/hero-slider";
 import type { HeroSlideData } from "@/data/hero";
 import type { GalleryAlbum } from "@/data/gallery";
 import type { MagazineIssue } from "@/data/dynamic-korean";
+import { guideDisplayName } from "@/data/guide";
 
 type NewsItem = {
   id: string;
@@ -57,11 +58,11 @@ type Club = {
   _count: { members: number };
 };
 
-type Guide = {
+type GuideCategory = {
   id: string;
-  category: string;
-  region: string;
-  title: string;
+  name: string;
+  slug: string;
+  itemCount: number;
 };
 
 const shortcuts = [
@@ -82,7 +83,7 @@ export function PortalHome({
   events,
   boards,
   clubs,
-  guides,
+  guideCategories,
   magazine,
   heroSlides,
   galleryAlbums,
@@ -91,7 +92,7 @@ export function PortalHome({
   events: EventItem[];
   boards: Board[];
   clubs: Club[];
-  guides: Guide[];
+  guideCategories: GuideCategory[];
   magazine: MagazineIssue | null;
   heroSlides: HeroSlideData[];
   galleryAlbums: GalleryAlbum[];
@@ -383,14 +384,17 @@ export function PortalHome({
 
           <PortalBox title={t.guide.title} href="/guide">
             <ul>
-              {guides.slice(0, 8).map((guide) => (
-                <li key={guide.id}>
-                  <Link href={`/guide/${guide.id}`} className="portal-list-item">
+              {guideCategories.slice(0, 8).map((category) => (
+                <li key={category.id}>
+                  <Link
+                    href={`/guide/c/${category.slug}`}
+                    className="portal-list-item"
+                  >
                     <span className="line-clamp-1 flex-1 text-[13px] font-medium">
-                      {guide.title}
+                      {guideDisplayName(category.name)}
                     </span>
                     <span className="shrink-0 text-[11px] text-muted-foreground">
-                      {guide.category}
+                      {category.itemCount}
                     </span>
                   </Link>
                 </li>
