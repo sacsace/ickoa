@@ -55,7 +55,6 @@ type Club = {
   slug: string;
   name: string;
   icon: string | null;
-  _count: { members: number };
 };
 
 type GuideCategory = {

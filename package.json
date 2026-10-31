@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 3700",
-    "build": "prisma generate && next build",
+    "build": "prisma generate && node ./scripts/next-build.mjs",
     "start": "sh ./scripts/railway-start.sh",
     "start:local": "next start -p 3700",
     "lint": "eslint",

@@ -22,10 +22,14 @@ export function BusinessMapClient({
   categories,
 }: {
   businesses: Business[];
-  categories: string[];
+  categories?: string[];
 }) {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const categoryOptions = useMemo(() => {
+    if (categories?.length) return categories;
+    return Array.from(new Set(businesses.map((b) => b.category).filter(Boolean))).sort();
+  }, [businesses, categories]);
 
   const filtered = useMemo(() => {
     const byCategory = activeCategory
@@ -52,7 +56,7 @@ export function BusinessMapClient({
           >
             All
           </button>
-          {categories.map((cat) => (
+          {categoryOptions.map((cat) => (
             <button
               key={cat}
               type="button"

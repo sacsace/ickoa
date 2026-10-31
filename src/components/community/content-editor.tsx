@@ -172,34 +172,34 @@ export function ContentEditor({
   function startImageResize(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
-    const img = selectedImgRef.current;
+    const target = selectedImgRef.current;
     const editor = ref.current;
-    if (!img || !editor) return;
-
+    if (!target || !editor) return;
+    const imgEl: HTMLImageElement = target;
     const startX = e.clientX;
-    const startWidth = img.getBoundingClientRect().width;
+    const startWidth = imgEl.getBoundingClientRect().width;
     const editorWidth = editor.clientWidth || 1;
 
-    function onMove(ev: MouseEvent) {
+    const onMove = (ev: MouseEvent) => {
       const delta = ev.clientX - startX;
       const nextPx = Math.max(80, startWidth + delta);
       const pct = Math.min(
         100,
         Math.max(10, Math.round((nextPx / editorWidth) * 100)),
       );
-      img.style.width = `${pct}%`;
-      img.style.maxWidth = "100%";
-      img.style.height = "auto";
+      imgEl.style.width = `${pct}%`;
+      imgEl.style.maxWidth = "100%";
+      imgEl.style.height = "auto";
       setImgWidthLabel(`${pct}%`);
-      updateHandlePos(img);
-    }
+      updateHandlePos(imgEl);
+    };
 
-    function onUp() {
+    const onUp = () => {
       document.removeEventListener("mousemove", onMove);
       document.removeEventListener("mouseup", onUp);
       emitChange();
-      updateHandlePos(img);
-    }
+      updateHandlePos(imgEl);
+    };
 
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);

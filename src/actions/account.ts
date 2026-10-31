@@ -21,14 +21,19 @@ const AVATAR_EXT_MIME: Record<string, string> = {
   gif: "image/gif",
 };
 
-function isUploadBlob(value: FormDataEntryValue | null): value is Blob {
-  return !!value && typeof value === "object" && "arrayBuffer" in value && (value as Blob).size > 0;
+function isUploadFile(value: FormDataEntryValue | null): value is File {
+  return (
+    !!value &&
+    typeof value === "object" &&
+    "arrayBuffer" in value &&
+    "name" in value &&
+    (value as File).size > 0
+  );
 }
 
-function resolveAvatarMime(file: Blob) {
+function resolveAvatarMime(file: File) {
   if (file.type && ALLOWED_AVATAR_TYPES.has(file.type)) return file.type;
-  const name = "name" in file ? String((file as File).name ?? "") : "";
-  const ext = name.split(".").pop()?.toLowerCase() ?? "";
+  const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
   return AVATAR_EXT_MIME[ext] ?? "";
 }
 
@@ -72,7 +77,7 @@ export async function updateSiteProfile(formData: FormData) {
   } = { name, email, phone, address, nameEn, company, jobTitle };
 
   const avatar = formData.get("avatar");
-  if (isUploadBlob(avatar)) {
+  if (isUploadFile(avatar)) {
     const mimeType = resolveAvatarMime(avatar);
     if (!mimeType || !ALLOWED_AVATAR_TYPES.has(mimeType)) {
       throw new Error("프로필 사진은 JPEG, PNG, WebP, GIF만 업로드할 수 있습니다.");
