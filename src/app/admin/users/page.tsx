@@ -1,14 +1,17 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { AdminUsersList } from "@/components/admin/admin-users-list";
+import { getAdminUser } from "@/lib/session-kind";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminUsersPage() {
   const session = await auth();
+  const admin = getAdminUser(session);
+  // loginId null 회원은 SQL NOT (loginId = 'root')에서 빠져 목록이 0이 됨 → null 포함
   const users = await prisma.user.findMany({
     where: {
-      NOT: { loginId: "root" },
+      OR: [{ loginId: null }, { loginId: { not: "root" } }],
     },
     select: {
       id: true,
@@ -33,7 +36,7 @@ export default async function AdminUsersPage() {
   return (
     <AdminUsersList
       users={users}
-      isSuperAdmin={session?.user?.role === "SUPER_ADMIN"}
+      isSuperAdmin={admin?.role === "SUPER_ADMIN"}
     />
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getSession, signIn, useSession } from "next-auth/react";
+import { Eye, EyeOff } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { isAdminSession, isSiteSession } from "@/lib/session-kind";
@@ -27,6 +28,7 @@ export default function LoginForm() {
   const redirected = useRef(false);
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -109,15 +111,29 @@ export default function LoginForm() {
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="h-11 w-full rounded-xl border border-border bg-card px-4 text-sm outline-none focus:border-brand/50"
-              autoComplete="current-password"
-              required
-              suppressHydrationWarning
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="h-11 w-full rounded-xl border border-border bg-card px-4 pr-11 text-sm outline-none focus:border-brand/50"
+                autoComplete="current-password"
+                required
+                suppressHydrationWarning
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-0 flex w-11 items-center justify-center text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
+            </div>
           </div>
           {error ? <p className="text-sm text-brand">{error}</p> : null}
           <Button type="submit" className="w-full" disabled={loading}>

@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { Role } from "@prisma/client";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminEmptyRow } from "@/components/admin/admin-board-ui";
+import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { formatKoDateTime } from "@/components/admin/admin-board-ui";
 import {
@@ -15,6 +17,7 @@ import {
   adminListRowNumber,
   useAdminList,
 } from "@/components/admin/admin-list-controls";
+import { deleteUser } from "@/actions/admin";
 
 const ADMIN_ROLES: Role[] = [
   "SUPER_ADMIN",
@@ -136,6 +139,8 @@ function UserListSection({
   users,
   linkMode,
   onSelect,
+  onDelete,
+  canDelete,
   searchPlaceholder,
   actions,
 }: {
@@ -143,6 +148,8 @@ function UserListSection({
   users: UserItem[];
   linkMode: "admin" | "member";
   onSelect?: (user: UserItem) => void;
+  onDelete?: (user: UserItem) => void;
+  canDelete?: boolean;
   searchPlaceholder: string;
   actions?: ReactNode;
 }) {
@@ -152,6 +159,7 @@ function UserListSection({
     [],
   );
   const list = useAdminList(users, getSearchText);
+  const colSpan = canDelete ? 5 : 4;
 
   return (
     <section className="mb-8 last:mb-0">
@@ -177,6 +185,11 @@ function UserListSection({
               <th className="px-3 py-2.5 text-left font-medium text-muted-foreground">이름</th>
               <th className="w-40 px-3 py-2.5 text-center font-medium text-muted-foreground">계정</th>
               <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">역할</th>
+              {canDelete ? (
+                <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">
+                  관리
+                </th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -214,11 +227,22 @@ function UserListSection({
                 <td className="px-3 py-3 text-center text-muted-foreground">
                   {ROLE_LABELS[user.role]}
                 </td>
+                {canDelete ? (
+                  <td className="px-3 py-3 text-center">
+                    <button
+                      type="button"
+                      onClick={() => onDelete?.(user)}
+                      className="text-xs text-red-600 hover:text-red-700"
+                    >
+                      삭제
+                    </button>
+                  </td>
+                ) : null}
               </tr>
             ))}
             {list.visible.length === 0 && (
               <AdminEmptyRow
-                colSpan={4}
+                colSpan={colSpan}
                 message={
                   users.length === 0 ? "목록이 비어 있습니다." : "검색 결과가 없습니다."
                 }
@@ -244,18 +268,25 @@ export function AdminUsersList({
   users: UserItem[];
   isSuperAdmin: boolean;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [selected, setSelected] = useState<UserItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UserItem | null>(null);
+  const [error, setError] = useState("");
   const adminUsers = users.filter((u) => ADMIN_ROLES.includes(u.role));
   const memberUsers = users.filter((u) => u.role === "MEMBER");
 
   return (
     <>
       <AdminPageHeader title="회원" subtitle={`총 ${users.length}명`} />
+      {error ? <p className="mb-3 text-sm text-red-600">{error}</p> : null}
       <UserListSection
         title={`관리자 (${adminUsers.length})`}
         users={adminUsers}
         linkMode="admin"
         searchPlaceholder="이름, 계정, 역할 검색..."
+        canDelete={isSuperAdmin}
+        onDelete={setDeleteTarget}
         actions={
           isSuperAdmin ? (
             <Link href="/admin/users/new">
@@ -270,11 +301,41 @@ export function AdminUsersList({
         linkMode="member"
         onSelect={setSelected}
         searchPlaceholder="이름, 계정 검색..."
+        canDelete={isSuperAdmin}
+        onDelete={setDeleteTarget}
       />
       <MemberInfoDialog
         user={selected}
         open={selected !== null}
         onClose={() => setSelected(null)}
+      />
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="회원 삭제"
+        description={
+          deleteTarget
+            ? `「${deleteTarget.name ?? deleteTarget.email ?? "회원"}」 계정을 삭제합니다. 게시글·댓글 등 관련 데이터도 함께 삭제될 수 있으며 복구할 수 없습니다.`
+            : ""
+        }
+        confirmLabel="삭제"
+        destructive
+        loading={isPending}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          startTransition(async () => {
+            const result = await deleteUser(deleteTarget.id);
+            if (result.error) {
+              setError(result.error);
+              setDeleteTarget(null);
+              return;
+            }
+            setError("");
+            setDeleteTarget(null);
+            setSelected(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );

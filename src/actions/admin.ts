@@ -209,6 +209,33 @@ export async function updateUserRole(userId: string, role: Role) {
   revalidatePath(`/admin/users/${userId}`);
 }
 
+export async function deleteUser(userId: string) {
+  try {
+    const session = await requireAdmin(["SUPER_ADMIN"]);
+    const target = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, loginId: true, role: true, name: true, email: true },
+    });
+    if (!target) return { error: "회원을 찾을 수 없습니다." };
+    if (target.loginId === "root" || target.role === "SUPER_ADMIN") {
+      return { error: "Root 관리자는 삭제할 수 없습니다." };
+    }
+    if (target.id === session.user.id) {
+      return { error: "본인 계정은 삭제할 수 없습니다." };
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath("/admin/users");
+    return {};
+  } catch (err) {
+    const message =
+      err instanceof Error && err.message === "Unauthorized"
+        ? "권한이 없습니다."
+        : "회원 삭제에 실패했습니다.";
+    return { error: message };
+  }
+}
+
 export async function createAdminUser(data: {
   loginId: string;
   name: string;

@@ -198,8 +198,12 @@ export const authConfig = {
         if (!loginId && !email) return null;
 
         const user = loginId
-          ? await prisma.user.findUnique({ where: { loginId } })
-          : await prisma.user.findUnique({ where: { email } });
+          ? await prisma.user.findFirst({
+              where: { loginId: { equals: loginId, mode: "insensitive" } },
+            })
+          : await prisma.user.findFirst({
+              where: { email: { equals: email!, mode: "insensitive" } },
+            });
 
         if (!user?.password) return null;
 

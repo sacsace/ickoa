@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -15,7 +15,7 @@ import {
   getSiteUser,
   isSiteSession,
 } from "@/lib/session-kind";
-import { signOutSite } from "@/lib/portal-signout";
+import { signOutAdmin, signOutSite } from "@/lib/portal-signout";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   mainNavigation,
@@ -27,7 +27,9 @@ export function Header() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
+  const userMenuRef = useRef<HTMLDivElement>(null);
   const { locale, setLocale, t } = useLocale();
   const { data: session, update } = useSession();
   const siteSession = isSiteSession(session);
@@ -36,8 +38,37 @@ export function Header() {
   useEffect(() => {
     setMobileOpen(false);
     setMegaOpen(false);
+    setUserMenuOpen(false);
     setMobileExpanded(null);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!userMenuOpen) return;
+    function onPointerDown(event: MouseEvent) {
+      if (!userMenuRef.current?.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setUserMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [userMenuOpen]);
+
+  function handleLogout() {
+    setUserMenuOpen(false);
+    setMobileOpen(false);
+    if (siteSession) {
+      void signOutSite(update, { callbackUrl: "/" });
+      return;
+    }
+    void signOutAdmin(update, { callbackUrl: "/" });
+  }
 
   return (
     <header
@@ -54,24 +85,6 @@ export function Header() {
             <Globe className="h-3 w-3" />
             {locale === "ko" ? "EN" : "KO"}
           </button>
-          {!siteSession ? (
-            <>
-              <Link href="/login" className="hover:text-brand">
-                {t.nav.login}
-              </Link>
-              <Link href="/register" className="hover:text-brand">
-                {t.nav.join}
-              </Link>
-            </>
-          ) : (
-            <button
-              type="button"
-              onClick={() => void signOutSite(update, { callbackUrl: "/" })}
-              className="hover:text-brand"
-            >
-              {t.nav.logout}
-            </button>
-          )}
           <Link href="/donate" className="hover:text-brand">
             {t.nav.donate}
           </Link>
@@ -130,8 +143,8 @@ export function Header() {
         </div>
       </div>
 
-      {/* GNB */}
-      <div className="hidden border-t border-border lg:block">
+      {/* GNB — 로그인/가입은 메뉴 라인 오른쪽 끝 */}
+      <div className="hidden border-t border-border md:block">
         <nav className="mx-auto flex h-11 max-w-[1356px] items-center gap-0.5 px-2">
           {mainNavigation.map((item) => {
             const active =
@@ -148,23 +161,78 @@ export function Header() {
             );
           })}
 
-          {portalUser ? (
-            <div
-              className="ml-auto flex shrink-0 items-center gap-2 pr-2"
-              onMouseEnter={() => setMegaOpen(false)}
-            >
-              <Link
-                href="/account"
-                className="flex items-center gap-2 text-[12px] font-medium text-foreground hover:text-brand"
-                title="내 정보 수정"
-              >
-                <span className="max-w-[140px] truncate">
-                  {portalUser.name ?? "회원"}
-                </span>
-                <UserAvatar src={portalUser.image} name={portalUser.name} />
-              </Link>
-            </div>
-          ) : null}
+          <div
+            ref={userMenuRef}
+            className="relative ml-auto flex shrink-0 items-center gap-2 pr-2"
+            onMouseEnter={() => setMegaOpen(false)}
+          >
+            {portalUser ? (
+              <>
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
+                  onClick={() => setUserMenuOpen((open) => !open)}
+                  className="flex h-9 items-center gap-2 rounded-lg px-2 text-[12px] font-medium text-foreground hover:bg-muted hover:text-brand"
+                >
+                  <span className="max-w-[120px] truncate">
+                    {portalUser.name ?? "회원"}
+                  </span>
+                  <UserAvatar src={portalUser.image} name={portalUser.name} />
+                  <ChevronDown
+                    className={cn(
+                      "h-3.5 w-3.5 text-muted-foreground transition-transform",
+                      userMenuOpen && "rotate-180",
+                    )}
+                  />
+                </button>
+                <AnimatePresence>
+                  {userMenuOpen ? (
+                    <motion.div
+                      role="menu"
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 top-full z-50 mt-1 min-w-[168px] overflow-hidden rounded-lg border border-border bg-white py-1 shadow-md"
+                    >
+                      <Link
+                        role="menuitem"
+                        href="/account"
+                        onClick={() => setUserMenuOpen(false)}
+                        className="block px-3 py-2 text-[12px] text-foreground hover:bg-muted"
+                      >
+                        {t.nav.editProfile}
+                      </Link>
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={handleLogout}
+                        className="block w-full px-3 py-2 text-left text-[12px] text-foreground hover:bg-muted"
+                      >
+                        {t.nav.logout}
+                      </button>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex h-8 items-center rounded-lg bg-brand px-3.5 text-[12px] font-semibold text-white hover:bg-brand-dark"
+                >
+                  {t.nav.login}
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex h-8 items-center rounded-lg border border-border bg-white px-3.5 text-[12px] font-semibold text-foreground hover:bg-muted"
+                >
+                  {t.nav.join}
+                </Link>
+              </>
+            )}
+          </div>
         </nav>
       </div>
 
@@ -270,17 +338,21 @@ export function Header() {
                     {t.nav.donate}
                   </Button>
                 </Link>
-                {siteSession ? (
-                  <Button
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => {
-                      setMobileOpen(false);
-                      void signOutSite(update, { callbackUrl: "/" });
-                    }}
-                  >
-                    {t.nav.logout}
-                  </Button>
+                {portalUser ? (
+                  <>
+                    <Link href="/account" onClick={() => setMobileOpen(false)}>
+                      <Button variant="outline" className="w-full">
+                        {t.nav.editProfile}
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="outline"
+                      className="col-span-2 w-full"
+                      onClick={handleLogout}
+                    >
+                      {t.nav.logout}
+                    </Button>
+                  </>
                 ) : (
                   <Link href="/login" onClick={() => setMobileOpen(false)}>
                     <Button className="w-full">{t.nav.login}</Button>

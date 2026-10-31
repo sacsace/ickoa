@@ -1,23 +1,36 @@
-import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-import { isAdmin } from "@/lib/permissions-client";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default auth((req) => {
+/** Keep middleware free of Prisma/bcrypt — those were bloating Turbopack + RAM. */
+const ADMIN_ROLES = new Set([
+  "SUPER_ADMIN",
+  "CONTENT_ADMIN",
+  "COMMUNITY_ADMIN",
+  "EVENT_ADMIN",
+]);
+
+function isAdminRole(role?: string | null) {
+  return !!role && ADMIN_ROLES.has(role);
+}
+
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdminLogin = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin") && !isAdminLogin;
 
-  const admin = req.auth?.admin;
-  const legacyAdminOnly =
-    !admin &&
-    req.auth?.sessionKind === "admin" &&
-    req.auth.user?.role &&
-    isAdmin(req.auth.user.role);
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  });
 
-  const isAdminLoggedIn = !!(
-    (admin && isAdmin(admin.role)) ||
-    legacyAdminOnly
-  );
+  const adminRole =
+    (token?.adminRole as string | undefined) ??
+    (token?.sessionKind === "admin"
+      ? (token?.role as string | undefined)
+      : undefined);
+
+  const isAdminLoggedIn = isAdminRole(adminRole);
 
   if (isAdminLogin && isAdminLoggedIn) {
     return NextResponse.redirect(new URL("/admin", req.url));
@@ -32,7 +45,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/admin/:path*"],
