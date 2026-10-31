@@ -16,9 +16,12 @@ COPY . .
 # makes React resolve inconsistently and crashes prerender of /_global-error.
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS=--max-old-space-size=4096
+ENV UPLOAD_ROOT=/tmp/build-uploads
 # Prisma requires DATABASE_URL at build; runtime Railway var overrides this.
 ENV DATABASE_URL="postgresql://build:build@127.0.0.1:5432/build"
-RUN npx prisma generate && npm run build
+# package.json build already runs prisma generate
+RUN npm run build
 
 FROM node:22-bookworm-slim AS runner
 WORKDIR /app

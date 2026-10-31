@@ -21,13 +21,13 @@ const s3 = s3Configured
     })
   : null;
 
-/** Railway 볼륨(/data) 또는 로컬 public 디렉터리 */
+/** Railway 볼륨(/data) 또는 로컬 public (cwd-relative — no process.cwd() for NFT) */
 function getUploadRoot() {
   const fromEnv =
     process.env.UPLOAD_ROOT?.trim() ||
     process.env.RAILWAY_VOLUME_MOUNT_PATH?.trim();
   if (fromEnv) return fromEnv;
-  return path.join(/* turbopackIgnore: true */ process.cwd(), "public");
+  return "public";
 }
 
 async function writeLocalFile(
