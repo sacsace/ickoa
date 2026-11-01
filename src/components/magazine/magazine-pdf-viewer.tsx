@@ -71,10 +71,16 @@ export function MagazinePdfViewer({
     [viewerSize, pageNaturalSize],
   );
 
+  // Provisional width until the first page reports natural size — otherwise
+  // Page never mounts (needs width) and natural size stays 0 forever.
+  const fallbackWidth = Math.max(
+    (viewerSize.width || 960) - VIEWER_PADDING,
+    320,
+  );
   const pageWidth =
-    pageNaturalSize.width > 0
+    pageNaturalSize.width > 0 && fitScale > 0
       ? pageNaturalSize.width * fitScale * userZoom
-      : undefined;
+      : fallbackWidth;
 
   useEffect(() => {
     setPage(Math.max(1, initialPage));
@@ -290,7 +296,7 @@ export function MagazinePdfViewer({
             loading={null}
             className={cn(error && "hidden")}
           >
-            {pageWidth && numPages > 0 && (
+            {numPages > 0 && !error ? (
               <Page
                 key={`${file}-${page}`}
                 pageNumber={page}
@@ -300,7 +306,7 @@ export function MagazinePdfViewer({
                 renderTextLayer
                 renderAnnotationLayer
               />
-            )}
+            ) : null}
           </Document>
         </div>
       </div>
