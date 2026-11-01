@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
+import { AdminFileUpload } from "@/components/admin/admin-file-upload";
 import { Button } from "@/components/ui/button";
 import { ContentEditor } from "@/components/community/content-editor";
 import { createHistoryEntry, updateHistoryEntry } from "@/actions/about";
@@ -15,6 +16,7 @@ type HistoryFormProps = {
     year: string;
     title: string;
     description: string | null;
+    image?: string | null;
     order: number;
   };
 };
@@ -23,26 +25,32 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [hasImageFile, setHasImageFile] = useState(false);
+  const [clearImage, setClearImage] = useState(false);
   const [form, setForm] = useState({
     year: initial?.year ?? "",
     title: initial?.title ?? "",
     description: initial?.description ?? "",
+    imageUrl: "",
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    const payload = {
-      year: form.year,
-      title: form.title,
-      description: form.description,
-    };
+    const formEl = e.currentTarget;
+    const formData = new FormData(formEl);
+    formData.set("year", form.year);
+    formData.set("title", form.title);
+    formData.set("description", form.description);
+    formData.set("imageUrl", form.imageUrl);
+    if (clearImage) formData.set("clearImage", "1");
+
     startTransition(async () => {
       try {
         if (initial) {
-          await updateHistoryEntry(initial.id, payload);
+          await updateHistoryEntry(initial.id, formData);
         } else {
-          await createHistoryEntry(payload);
+          await createHistoryEntry(formData);
         }
         router.push("/admin/about/history");
         router.refresh();
@@ -51,6 +59,8 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
       }
     });
   }
+
+  const showCurrentImage = Boolean(initial?.image) && !clearImage && !hasImageFile;
 
   return (
     <>
@@ -83,6 +93,51 @@ export function AdminHistoryForm({ initial }: HistoryFormProps) {
             onChange={(description) => setForm({ ...form, description })}
             placeholder="연혁 설명을 입력하세요"
             minHeight={180}
+          />
+        </div>
+        <div>
+          <label className="mb-1 block text-xs text-muted-foreground">사진</label>
+          {showCurrentImage ? (
+            <div className="mb-3 border border-border bg-muted/20 p-3">
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={initial!.image!}
+                  alt=""
+                  className="h-24 w-36 shrink-0 object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-muted-foreground">현재 등록된 사진</p>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setClearImage(true)}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    사진 제거
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          <AdminFileUpload
+            name="image"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            disabled={isPending}
+            hint="JPEG/PNG/WebP/GIF · 최대 10MB"
+            onFileChange={(file) => {
+              setHasImageFile(!!file);
+              if (file) setClearImage(false);
+            }}
+          />
+          <input
+            value={form.imageUrl}
+            onChange={(e) => {
+              setForm({ ...form, imageUrl: e.target.value });
+              if (e.target.value.trim()) setClearImage(false);
+            }}
+            className="mt-2 h-11 w-full border border-border bg-background px-4 text-sm"
+            placeholder="또는 이미지 URL 입력 (https://... / /history/...)"
           />
         </div>
         {error ? <p className="text-sm text-red-600">{error}</p> : null}

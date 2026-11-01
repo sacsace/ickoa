@@ -79,24 +79,55 @@ export async function deleteBylaw(id: string) {
 
 /* ── 연혁 ── */
 
-export async function createHistoryEntry(data: {
-  year: string;
-  title: string;
-  description?: string;
-}) {
+const HISTORY_IMAGE_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const MAX_HISTORY_IMAGE_BYTES = 10 * 1024 * 1024;
+
+async function resolveHistoryImage(
+  imageFile: File | null | undefined,
+  imageUrlInput: string | null | undefined,
+  previousImage?: string | null,
+) {
+  const urlInput = imageUrlInput?.trim() || "";
+  if (imageFile && imageFile.size > 0) {
+    if (imageFile.size > MAX_HISTORY_IMAGE_BYTES) {
+      throw new Error("사진 크기는 10MB 이하여야 합니다.");
+    }
+    const mime = imageFile.type || "";
+    if (!HISTORY_IMAGE_TYPES.has(mime)) {
+      throw new Error("JPEG, PNG, WebP, GIF 이미지만 업로드할 수 있습니다.");
+    }
+    const { uploadToHistoryFolder } = await import("@/lib/s3");
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    return uploadToHistoryFolder(buffer, imageFile.name, mime);
+  }
+  if (urlInput) return urlInput;
+  return previousImage ?? null;
+}
+
+export async function createHistoryEntry(formData: FormData) {
   await requireContentAdmin();
-  const year = data.year.trim();
-  const title = data.title.trim();
+  const year = String(formData.get("year") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "");
+  const imageUrl = String(formData.get("imageUrl") ?? "");
+  const imageFile = formData.get("image") as File | null;
   if (!year || !title) throw new Error("연도와 제목을 입력해 주세요.");
 
   const maxOrder = await prisma.historyEntry.aggregate({ _max: { order: true } });
   const order = (maxOrder._max.order ?? 0) + 1;
+  const image = await resolveHistoryImage(imageFile, imageUrl, null);
 
   const entry = await prisma.historyEntry.create({
     data: {
       year,
       title,
-      description: data.description?.trim() || null,
+      description: description.trim() || null,
+      image,
       order,
     },
   });
@@ -104,21 +135,33 @@ export async function createHistoryEntry(data: {
   return entry;
 }
 
-export async function updateHistoryEntry(
-  id: string,
-  data: { year: string; title: string; description?: string },
-) {
+export async function updateHistoryEntry(id: string, formData: FormData) {
   await requireContentAdmin();
-  const year = data.year.trim();
-  const title = data.title.trim();
+  const year = String(formData.get("year") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const description = String(formData.get("description") ?? "");
+  const imageUrl = String(formData.get("imageUrl") ?? "");
+  const clearImage = String(formData.get("clearImage") ?? "") === "1";
+  const imageFile = formData.get("image") as File | null;
   if (!year || !title) throw new Error("연도와 제목을 입력해 주세요.");
+
+  const existing = await prisma.historyEntry.findUnique({ where: { id } });
+  if (!existing) throw new Error("연혁을 찾을 수 없습니다.");
+
+  let image: string | null = existing.image;
+  if (clearImage && !(imageFile && imageFile.size > 0) && !imageUrl.trim()) {
+    image = null;
+  } else {
+    image = await resolveHistoryImage(imageFile, imageUrl, existing.image);
+  }
 
   const entry = await prisma.historyEntry.update({
     where: { id },
     data: {
       year,
       title,
-      description: data.description?.trim() || null,
+      description: description.trim() || null,
+      image,
     },
   });
   revalidateAbout("/about/history", "/admin/about/history", `/admin/about/history/${id}`);
@@ -142,6 +185,66 @@ export async function deleteHistoryEntry(id: string) {
   );
   revalidateAbout("/about/history", "/admin/about/history");
   return { ok: true as const };
+}
+
+export async function moveHistoryEntry(id: string, direction: "up" | "down") {
+  await requireContentAdmin();
+
+  const entries = await prisma.historyEntry.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+  });
+  const index = entries.findIndex((entry) => entry.id === id);
+  if (index === -1) return;
+
+  const swapIndex = direction === "up" ? index - 1 : index + 1;
+  if (swapIndex < 0 || swapIndex >= entries.length) return;
+
+  const current = entries[index]!;
+  const target = entries[swapIndex]!;
+
+  await prisma.$transaction([
+    prisma.historyEntry.update({
+      where: { id: current.id },
+      data: { order: target.order },
+    }),
+    prisma.historyEntry.update({
+      where: { id: target.id },
+      data: { order: current.order },
+    }),
+  ]);
+
+  revalidateAbout("/about/history", "/admin/about/history");
+}
+
+/** 순서 번호를 직접 지정하면 해당 위치로 이동 후 전체 순서를 1..N으로 재정렬합니다. */
+export async function setHistoryEntryOrder(id: string, orderInput: number) {
+  await requireContentAdmin();
+
+  const entries = await prisma.historyEntry.findMany({
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+  });
+  const fromIndex = entries.findIndex((entry) => entry.id === id);
+  if (fromIndex === -1) return;
+
+  const max = entries.length;
+  const toIndex = Math.min(Math.max(Math.round(orderInput), 1), max) - 1;
+  if (toIndex === fromIndex) return;
+
+  const next = [...entries];
+  const [moved] = next.splice(fromIndex, 1);
+  if (!moved) return;
+  next.splice(toIndex, 0, moved);
+
+  await prisma.$transaction(
+    next.map((entry, index) =>
+      prisma.historyEntry.update({
+        where: { id: entry.id },
+        data: { order: index + 1 },
+      }),
+    ),
+  );
+
+  revalidateAbout("/about/history", "/admin/about/history");
 }
 
 /* ── 활동 보고서 ── */

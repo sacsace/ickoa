@@ -90,6 +90,14 @@ export async function uploadGalleryFile(
   return uploadToFolder(buffer, filename, mimeType, "gallery");
 }
 
+export async function uploadToHistoryFolder(
+  buffer: Buffer,
+  filename: string,
+  mimeType: string,
+): Promise<string> {
+  return uploadToFolder(buffer, filename, mimeType, "history");
+}
+
 async function uploadToFolder(
   buffer: Buffer,
   filename: string,

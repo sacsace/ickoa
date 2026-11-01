@@ -181,6 +181,16 @@ export default async function AboutSubPage({
                             />
                           </div>
                         ) : null}
+                        {entry.image ? (
+                          <div className="mt-4 overflow-hidden border border-border">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={entry.image}
+                              alt={entry.title}
+                              className="max-h-72 w-full object-cover"
+                            />
+                          </div>
+                        ) : null}
                       </div>
                     </div>
                   </li>

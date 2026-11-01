@@ -6,9 +6,9 @@ DATA_ROOT="${UPLOAD_ROOT:-${RAILWAY_VOLUME_MOUNT_PATH:-}}"
 
 if [ -n "$DATA_ROOT" ]; then
   echo "Using upload volume at: $DATA_ROOT"
-  mkdir -p "$DATA_ROOT/uploads" "$DATA_ROOT/magazine" "$DATA_ROOT/gallery" "$DATA_ROOT/hero"
+  mkdir -p "$DATA_ROOT/uploads" "$DATA_ROOT/magazine" "$DATA_ROOT/gallery" "$DATA_ROOT/hero" "$DATA_ROOT/history"
 
-  for dir in uploads magazine gallery hero; do
+  for dir in uploads magazine gallery hero history; do
     target="public/$dir"
     # Seed bundled public assets into the volume once (non-clobber)
     if [ -d "$target" ] && [ ! -L "$target" ]; then
