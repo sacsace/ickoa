@@ -1,10 +1,33 @@
-import Image from "next/image";
 import { PageHeader } from "@/components/ui/page-header";
 import { LeadershipOrgChart } from "@/components/about/leadership-org-chart";
+import { CiLogoGallery } from "@/components/about/ci-logo-gallery";
+import { RegistrationDocsGallery } from "@/components/about/registration-docs-gallery";
 import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { createMetadata } from "@/lib/seo";
 import { ensureAboutDefaults } from "@/lib/about-defaults";
 import { prisma } from "@/lib/prisma";
+
+const REGISTRATION_DOCS = [
+  {
+    key: "certificate",
+    title: "Certificate of Registration of Societies",
+    description:
+      "Tamil Nadu Societies Registration Act, 1975 — SL. NO. 69 of 2014 (2014.02.24, Chennai South)",
+    src: "/about/registration/certificate-of-registration.jpg",
+    fileName: "kaic-certificate-of-registration.jpg",
+    width: 766,
+    height: 1024,
+  },
+  {
+    key: "pan",
+    title: "Permanent Account Number (PAN)",
+    description: "KOREAN ASSOCIATION IN CHENNAI — AACAK3519K (발급일 2014.02.24)",
+    src: "/about/registration/pan-card.jpg",
+    fileName: "kaic-pan-card.jpg",
+    width: 1024,
+    height: 659,
+  },
+] as const;
 
 const STATIC: Record<string, { title: string; body: string }> = {
   finance: {
@@ -28,6 +51,7 @@ export async function generateMetadata({
     history: "연혁",
     leadership: "회장단",
     ci: "CI",
+    registration: "한인회 등록 문서",
   };
   if (titles[slug]) {
     return createMetadata({
@@ -54,6 +78,29 @@ export default async function AboutSubPage({
 }) {
   const { slug } = await params;
   await ensureAboutDefaults();
+
+  if (slug === "registration") {
+    return (
+      <>
+        <PageHeader
+          title="한인회 등록 문서"
+          subtitle="Official registration documents — Korean Association in Chennai"
+          backHref="/about"
+        />
+        <div className="mx-auto w-full max-w-[1356px] space-y-6 px-4 py-8 md:px-6 md:py-10">
+          <section className="border border-border bg-card p-6 md:p-8">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              재인도 첸나이 한인회(Korean Association in Chennai)의 공식 등록·인가 문서입니다.
+              이미지를 클릭하면 크게 볼 수 있습니다.
+            </p>
+            <div className="mt-6">
+              <RegistrationDocsGallery docs={[...REGISTRATION_DOCS]} />
+            </div>
+          </section>
+        </div>
+      </>
+    );
+  }
 
   if (slug === "bylaws") {
     const docs = await prisma.aboutDocument.findMany({
@@ -166,6 +213,50 @@ export default async function AboutSubPage({
   }
 
   if (slug === "ci") {
+    const logoVariants = [
+      {
+        key: "circle",
+        title: "원형 로고",
+        description: "심볼 + 국·영문 원형 시그니처. 대표 사용 형태입니다.",
+        src: "/ci/logo-circle.png",
+        fileName: "kaic-logo-circle.png",
+        width: 1000,
+        height: 1162,
+      },
+      {
+        key: "circle-clear",
+        title: "원형 로고 (클리어)",
+        description: "여백이 정리된 원형 로고. 작은 크기·아이콘 영역에 적합합니다.",
+        src: "/ci/logo-circle-clear.png",
+        fileName: "kaic-logo-circle-clear.png",
+        width: 733,
+        height: 728,
+      },
+      {
+        key: "horizontal",
+        title: "가로형 로고",
+        description: "심볼과 워드마크를 가로로 배치한 조합형입니다.",
+        src: "/ci/logo-horizontal.png",
+        fileName: "kaic-logo-horizontal.png",
+        width: 2400,
+        height: 680,
+        wide: true as const,
+      },
+    ] as const;
+
+    const sloganVariants = [
+      {
+        key: "slogan",
+        title: "표어 서체",
+        description: "첸나이 한인들의 열린공간 — 공식 캘리그래피 표어입니다.",
+        src: "/ci/slogan.png",
+        fileName: "kaic-slogan.png",
+        width: 984,
+        height: 131,
+        wide: true as const,
+      },
+    ] as const;
+
     return (
       <>
         <PageHeader
@@ -175,21 +266,22 @@ export default async function AboutSubPage({
         />
         <div className="mx-auto w-full max-w-[1356px] space-y-8 px-4 py-8 md:px-6 md:py-10">
           <section className="border border-border bg-card p-6 md:p-8">
-            <h2 className="text-base font-bold">로고</h2>
+            <h2 className="text-base font-bold">로고 3형태</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               재인도 첸나이 한인회(KAIC)의 공식 로고입니다. 행사 자료, 인쇄물, 디지털
-              콘텐츠에 사용할 수 있습니다.
+              콘텐츠에 사용할 수 있으며, 아래에서 배경이 투명한 PNG 파일을 내려받을 수
+              있습니다.
             </p>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div className="flex flex-col items-center justify-center border border-border bg-white px-6 py-10">
-                <Image src="/logo.png" alt="KAIC 로고" width={220} height={72} className="h-16 w-auto object-contain" />
-                <p className="mt-4 text-xs text-muted-foreground">기본 로고 (밝은 배경)</p>
-              </div>
-              <div className="flex flex-col items-center justify-center border border-border bg-[#0b1f3a] px-6 py-10">
-                <Image src="/logo-dark.png" alt="KAIC 다크 로고" width={220} height={72} className="h-16 w-auto object-contain" />
-                <p className="mt-4 text-xs text-white/70">다크 로고 (어두운 배경)</p>
-              </div>
-            </div>
+            <CiLogoGallery logos={[...logoVariants]} />
+          </section>
+
+          <section className="border border-border bg-card p-6 md:p-8">
+            <h2 className="text-base font-bold">표어</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              공식 표어 서체입니다. 클릭하면 크게 볼 수 있고, 투명 PNG로 내려받을 수
+              있습니다.
+            </p>
+            <CiLogoGallery logos={[...sloganVariants]} />
           </section>
 
           <section className="border border-border bg-card p-6 md:p-8">
@@ -205,7 +297,7 @@ export default async function AboutSubPage({
               </div>
               <div className="border border-border px-4 py-3">
                 <dt className="text-xs text-muted-foreground">표어</dt>
-                <dd className="mt-1 font-semibold">우리들의 열린 공간</dd>
+                <dd className="mt-1 font-semibold">첸나이 한인들의 열린공간</dd>
               </div>
               <div className="border border-border px-4 py-3">
                 <dt className="text-xs text-muted-foreground">영문 표어</dt>
@@ -219,7 +311,8 @@ export default async function AboutSubPage({
             <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted-foreground">
               <li>로고 비율을 임의로 늘리거나 줄이지 말아 주세요.</li>
               <li>로고 색상을 변경하거나 효과를 추가하지 말아 주세요.</li>
-              <li>공식 문서·행사 현수막·명함에는 기본 로고 사용을 권장합니다.</li>
+              <li>공식 문서·행사 현수막·명함에는 원형 로고 사용을 권장합니다.</li>
+              <li>웹·명함 가로 배너 등에는 가로형 로고를 사용할 수 있습니다.</li>
               <li>문의: edit@ickoa.org</li>
             </ul>
           </section>

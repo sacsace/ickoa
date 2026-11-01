@@ -119,6 +119,12 @@ export const mainNavigation: NavItem[] = [
       { id: "a-reports", href: "/about/reports", labelKo: "활동 보고서", labelEn: "Reports" },
       { id: "a-sponsors", href: "/about/sponsors", labelKo: "후원사", labelEn: "Sponsors" },
       { id: "a-ci", href: "/about/ci", labelKo: "CI", labelEn: "CI" },
+      {
+        id: "a-registration",
+        href: "/about/registration",
+        labelKo: "한인회 등록 문서",
+        labelEn: "Registration Documents",
+      },
       { id: "a-contact", href: "/contact", labelKo: "문의하기", labelEn: "Contact" },
       { id: "a-donate", href: "/donate", labelKo: "후원하기 (Razorpay)", labelEn: "Donate (Razorpay)" },
     ],

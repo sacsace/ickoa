@@ -105,6 +105,7 @@ export const translations = {
       finance: "재무 공개",
       sponsors: "후원사",
       ci: "CI",
+      registration: "한인회 등록 문서",
     },
     footer: {
       description: "우리들의 열린 공간",
@@ -220,6 +221,7 @@ export const translations = {
       finance: "Financial Disclosure",
       sponsors: "Sponsors",
       ci: "CI",
+      registration: "Registration Documents",
     },
     footer: {
       description: "Our Open Space",
