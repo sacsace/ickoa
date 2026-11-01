@@ -10,12 +10,8 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { LogoWithText } from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import {
-  getAdminUser,
-  getSiteUser,
-  isSiteSession,
-} from "@/lib/session-kind";
-import { signOutAdmin, signOutSite } from "@/lib/portal-signout";
+import { getAdminUser, getSiteUser } from "@/lib/session-kind";
+import { signOutAll } from "@/lib/portal-signout";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   mainNavigation,
@@ -31,8 +27,7 @@ export function Header() {
   const [mobileExpanded, setMobileExpanded] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { locale, setLocale, t } = useLocale();
-  const { data: session, update } = useSession();
-  const siteSession = isSiteSession(session);
+  const { data: session } = useSession();
   const portalUser = getSiteUser(session) ?? getAdminUser(session);
 
   useEffect(() => {
@@ -63,11 +58,8 @@ export function Header() {
   function handleLogout() {
     setUserMenuOpen(false);
     setMobileOpen(false);
-    if (siteSession) {
-      void signOutSite(update, { callbackUrl: "/" });
-      return;
-    }
-    void signOutAdmin(update, { callbackUrl: "/" });
+    // 관리자 로그인 시 site+admin 슬롯이 함께 채워지므로, 공개 헤더 로그아웃은 전부 종료
+    void signOutAll("/");
   }
 
   return (

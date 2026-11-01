@@ -146,6 +146,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               value={`@${initial.loginId}`}
               disabled
               className="h-11 w-full border border-border bg-muted px-3 text-sm text-muted-foreground"
+              suppressHydrationWarning
             />
           </div>
         ) : null}
@@ -157,6 +158,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               required
+              suppressHydrationWarning
             />
           </div>
           <div>
@@ -166,6 +168,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, nameEn: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               placeholder="Hong Gildong"
+              suppressHydrationWarning
             />
           </div>
         </div>
@@ -177,6 +180,7 @@ export function AccountForm({ initial }: AccountFormProps) {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
             placeholder="member@ickoa.org"
+            suppressHydrationWarning
           />
         </div>
         <div>
@@ -187,6 +191,7 @@ export function AccountForm({ initial }: AccountFormProps) {
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
             className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
             placeholder="+91-44-0000-0000"
+            suppressHydrationWarning
           />
         </div>
         <div>
@@ -196,6 +201,7 @@ export function AccountForm({ initial }: AccountFormProps) {
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
             placeholder="Chennai, Tamil Nadu"
+            suppressHydrationWarning
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -206,6 +212,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, company: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               placeholder="Hyundai Motor India"
+              suppressHydrationWarning
             />
           </div>
           <div>
@@ -215,6 +222,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, jobTitle: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               placeholder="Engineer"
+              suppressHydrationWarning
             />
           </div>
         </div>
@@ -233,6 +241,7 @@ export function AccountForm({ initial }: AccountFormProps) {
             onChange={(e) => setForm({ ...form, currentPassword: e.target.value })}
             className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
             autoComplete="current-password"
+            suppressHydrationWarning
           />
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
@@ -244,6 +253,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               autoComplete="new-password"
+              suppressHydrationWarning
             />
           </div>
           <div>
@@ -254,6 +264,7 @@ export function AccountForm({ initial }: AccountFormProps) {
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
               className="h-11 w-full border border-border bg-white px-3 text-sm outline-none focus:border-brand"
               autoComplete="new-password"
+              suppressHydrationWarning
             />
           </div>
         </div>
