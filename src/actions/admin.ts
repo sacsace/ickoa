@@ -1342,14 +1342,24 @@ export async function deleteBanner(id: string) {
 export async function createGalleryAlbum(formData: FormData) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
 
+  const { slugifyGallery } = await import("@/lib/gallery-data");
   const title = String(formData.get("title") ?? "").trim();
   const titleEn = String(formData.get("titleEn") ?? "").trim();
-  const slug = String(formData.get("slug") ?? "").trim();
+  const rawSlug = String(formData.get("slug") ?? "").trim();
   const category = String(formData.get("category") ?? "ickoa").trim();
   const coverUrl = String(formData.get("coverUrl") ?? "").trim();
   const coverFile = formData.get("cover") as File | null;
 
-  if (!title || !slug) throw new Error("제목과 슬러그를 입력해 주세요.");
+  if (!title) throw new Error("제목을 입력해 주세요.");
+
+  let baseSlug = slugifyGallery(rawSlug || titleEn || title);
+  let slug = baseSlug;
+  let n = 2;
+  for (;;) {
+    const clash = await prisma.galleryAlbum.findUnique({ where: { slug }, select: { id: true } });
+    if (!clash) break;
+    slug = `${baseSlug}-${n++}`;
+  }
 
   let cover = coverUrl;
   if (coverFile && coverFile.size > 0) {
@@ -1376,7 +1386,7 @@ export async function createGalleryAlbum(formData: FormData) {
     },
   });
 
-  revalidateGallery(album.id);
+  revalidateGallery(album.id, album.slug);
   return album;
 }
 
@@ -1414,31 +1424,54 @@ export async function addGalleryPhoto(formData: FormData) {
     },
   });
 
-  revalidateGallery(albumId);
+  const album = await prisma.galleryAlbum.findUnique({
+    where: { id: albumId },
+    include: { photos: { select: { id: true } } },
+  });
+  // First photo (or missing cover) → use uploaded image as cover.
+  if (album && (!album.cover?.trim() || album.photos.length <= 1)) {
+    await prisma.galleryAlbum.update({ where: { id: albumId }, data: { cover: src } });
+  }
+
+  const { ensureSafeGallerySlug } = await import("@/lib/gallery-data");
+  const repaired = await ensureSafeGallerySlug(albumId);
+
+  revalidateGallery(albumId, repaired?.slug ?? album?.slug);
   return photo;
 }
 
 export async function deleteGalleryAlbum(id: string) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
+  const album = await prisma.galleryAlbum.findUnique({ where: { id }, select: { slug: true } });
   await prisma.galleryAlbum.delete({ where: { id } });
-  revalidateGallery(id);
+  revalidateGallery(id, album?.slug);
 }
 
 export async function deleteGalleryPhoto(id: string) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
   const photo = await prisma.galleryPhoto.delete({ where: { id } });
-  revalidateGallery(photo.albumId);
+  const album = await prisma.galleryAlbum.findUnique({
+    where: { id: photo.albumId },
+    select: { slug: true },
+  });
+  revalidateGallery(photo.albumId, album?.slug);
 }
 
 export async function toggleGalleryAlbumPublished(id: string, published: boolean) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
+  const { ensureSafeGallerySlug } = await import("@/lib/gallery-data");
+  const repaired = await ensureSafeGallerySlug(id);
   await prisma.galleryAlbum.update({ where: { id }, data: { published } });
-  revalidateGallery(id);
+  revalidateGallery(id, repaired?.slug);
 }
 
-function revalidateGallery(albumId?: string) {
+function revalidateGallery(albumId?: string, slug?: string) {
   revalidatePath("/gallery");
   revalidatePath("/");
   revalidatePath("/admin/gallery");
-  if (albumId) revalidatePath(`/admin/gallery/${albumId}`);
+  if (albumId) {
+    revalidatePath(`/admin/gallery/${albumId}`);
+    revalidatePath(`/gallery/${albumId}`);
+  }
+  if (slug) revalidatePath(`/gallery/${slug}`);
 }

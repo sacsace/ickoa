@@ -74,13 +74,14 @@ export function AdminGalleryForm({ categories }: { categories: CategoryOption[] 
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs text-muted-foreground">슬러그 *</label>
+            <label className="mb-1 block text-xs text-muted-foreground">
+              슬러그 (영문·숫자·하이픈만, 비우면 제목에서 자동 생성)
+            </label>
             <input
               value={form.slug}
               onChange={(e) => setForm({ ...form, slug: e.target.value })}
-              placeholder="ickoa-events"
+              placeholder="new-year-2025"
               className="h-11 w-full border border-border bg-background px-4 text-sm"
-              required
             />
           </div>
           <div>

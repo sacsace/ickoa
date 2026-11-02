@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
+import { AdminFileUpload } from "@/components/admin/admin-file-upload";
 import { Button } from "@/components/ui/button";
 import { ContentEditor } from "@/components/community/content-editor";
 import { createLeadershipMember, updateLeadershipMember } from "@/actions/about";
@@ -28,12 +29,14 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [hasImageFile, setHasImageFile] = useState(false);
+  const [clearImage, setClearImage] = useState(false);
   const [form, setForm] = useState({
     name: initial?.name ?? "",
     nameEn: initial?.nameEn ?? "",
     role: initial?.role ?? "",
     bio: initial?.bio ?? "",
-    image: initial?.image ?? "",
+    imageUrl: "",
     level: String(
       initial?.level && initial.level > 0
         ? initial.level
@@ -44,22 +47,24 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
     published: initial?.published ?? true,
   });
 
-  function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    const payload = {
-      name: form.name,
-      nameEn: form.nameEn,
-      role: form.role,
-      bio: form.bio,
-      image: form.image,
-      level: Number(form.level) || 1,
-      published: form.published,
-    };
+    const formEl = e.currentTarget;
+    const formData = new FormData(formEl);
+    formData.set("name", form.name);
+    formData.set("nameEn", form.nameEn);
+    formData.set("role", form.role);
+    formData.set("bio", form.bio);
+    formData.set("imageUrl", form.imageUrl);
+    formData.set("level", form.level);
+    formData.set("published", form.published ? "1" : "0");
+    if (clearImage) formData.set("clearImage", "1");
+
     startTransition(async () => {
       try {
-        if (initial) await updateLeadershipMember(initial.id, payload);
-        else await createLeadershipMember(payload);
+        if (initial) await updateLeadershipMember(initial.id, formData);
+        else await createLeadershipMember(formData);
         router.push("/admin/about/leadership");
         router.refresh();
       } catch (err) {
@@ -67,6 +72,8 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
       }
     });
   }
+
+  const showCurrentImage = Boolean(initial?.image) && !clearImage && !hasImageFile;
 
   return (
     <>
@@ -132,12 +139,48 @@ export function AdminLeadershipForm({ initial }: LeadershipFormProps) {
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">사진 URL</label>
+          <label className="mb-1 block text-xs text-muted-foreground">사진</label>
+          {showCurrentImage ? (
+            <div className="mb-3 border border-border bg-muted/20 p-3">
+              <div className="flex items-start gap-3">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={initial!.image!}
+                  alt=""
+                  className="h-24 w-20 shrink-0 object-cover"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm text-muted-foreground">현재 등록된 사진</p>
+                  <button
+                    type="button"
+                    disabled={isPending}
+                    onClick={() => setClearImage(true)}
+                    className="mt-2 text-xs text-muted-foreground hover:text-foreground"
+                  >
+                    사진 제거
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+          <AdminFileUpload
+            name="image"
+            accept="image/jpeg,image/png,image/webp,image/gif,.jpg,.jpeg,.png,.webp,.gif"
+            disabled={isPending}
+            hint="JPEG/PNG/WebP/GIF · 최대 10MB · 드래그 앤 드롭 또는 파일 선택"
+            onFileChange={(file) => {
+              setHasImageFile(!!file);
+              if (file) setClearImage(false);
+            }}
+          />
           <input
-            value={form.image}
-            onChange={(e) => setForm({ ...form, image: e.target.value })}
-            className="h-11 w-full border border-border bg-background px-4 text-sm"
-            placeholder="https://... 또는 /uploads/..."
+            value={form.imageUrl}
+            onChange={(e) => {
+              setForm({ ...form, imageUrl: e.target.value });
+              if (e.target.value.trim()) setClearImage(false);
+            }}
+            className="mt-2 h-11 w-full border border-border bg-background px-4 text-sm"
+            placeholder="또는 이미지 URL 입력 (https://... / /uploads/...)"
           />
         </div>
         <label className="inline-flex items-center gap-2 text-sm">

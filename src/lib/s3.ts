@@ -88,7 +88,8 @@ export async function uploadGalleryFile(
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  return uploadToFolder(buffer, filename, mimeType, "gallery");
+  // Prefer /uploads (already volume-mounted & publicly reachable on Railway).
+  return uploadToFolder(buffer, `gallery-${filename}`, mimeType, "uploads");
 }
 
 export async function uploadToHistoryFolder(

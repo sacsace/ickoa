@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useRef, useState, useTransition } from "react";
@@ -8,6 +7,7 @@ import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { Button } from "@/components/ui/button";
+import { galleryAlbumPathId } from "@/lib/gallery-slug";
 import {
   addGalleryPhoto,
   deleteGalleryAlbum,
@@ -34,6 +34,8 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ id: string; caption: string } | null>(null);
 
+  const sitePath = `/gallery/${galleryAlbumPathId(album)}`;
+
   function handleAddPhoto() {
     setError(null);
     const fd = new FormData();
@@ -55,30 +57,73 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
 
   return (
     <>
-      <AdminPageHeader title={album.title} subtitle={`/gallery/${album.slug}`} />
+      <AdminPageHeader title={album.title} subtitle={sitePath} />
       <AdminBackLink href="/admin/gallery" />
       <div className="mb-4">
-        <Link href={`/gallery/${album.slug}`} target="_blank" className="text-sm text-brand hover:underline">사이트에서 보기</Link>
+        <Link href={sitePath} target="_blank" className="text-sm text-brand hover:underline">
+          사이트에서 보기
+        </Link>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
-        <Button size="sm" variant="outline" disabled={isPending} onClick={() => startTransition(async () => { await toggleGalleryAlbumPublished(album.id, !album.published); router.refresh(); })}>{album.published ? "비공개" : "공개"}</Button>
-        <Button size="sm" variant="outline" className="border-red-200 text-red-600 hover:bg-red-50" disabled={isPending} onClick={() => setDeleteOpen(true)}>앨범 삭제</Button>
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isPending}
+          onClick={() =>
+            startTransition(async () => {
+              await toggleGalleryAlbumPublished(album.id, !album.published);
+              router.refresh();
+            })
+          }
+        >
+          {album.published ? "비공개" : "공개"}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="border-red-200 text-red-600 hover:bg-red-50"
+          disabled={isPending}
+          onClick={() => setDeleteOpen(true)}
+        >
+          앨범 삭제
+        </Button>
       </div>
       <div className="mb-6 flex flex-wrap gap-2">
         {album.photos.map((p) => (
           <div key={p.id} className="text-sm">
             <div className="relative h-20 w-20 overflow-hidden bg-muted">
-              <Image src={p.src} alt={p.caption} fill className="object-cover" sizes="80px" unoptimized={p.src.startsWith("http")} />
+              {/* eslint-disable-next-line @next/next/no-img-element -- local upload paths bypass next/image optimizer */}
+              <img
+                src={p.src}
+                alt={p.caption || album.title}
+                className="h-full w-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.opacity = "0.25";
+                }}
+              />
             </div>
-            <button type="button" onClick={() => setDeletePhotoTarget(p)} className="mt-1 text-xs text-red-600">삭제</button>
+            <button
+              type="button"
+              onClick={() => setDeletePhotoTarget(p)}
+              className="mt-1 text-xs text-red-600"
+            >
+              삭제
+            </button>
           </div>
         ))}
-        {album.photos.length === 0 && <p className="text-sm text-muted-foreground">등록된 사진이 없습니다.</p>}
+        {album.photos.length === 0 && (
+          <p className="text-sm text-muted-foreground">등록된 사진이 없습니다.</p>
+        )}
       </div>
       <div className="border border-border p-4">
         <h3 className="mb-3 text-sm font-medium">사진 추가</h3>
         <div className="flex flex-wrap gap-2">
-          <input value={photoCaption} onChange={(e) => setPhotoCaption(e.target.value)} placeholder="사진 설명" className="h-9 min-w-[160px] flex-1 border border-border bg-background px-3 text-sm" />
+          <input
+            value={photoCaption}
+            onChange={(e) => setPhotoCaption(e.target.value)}
+            placeholder="사진 설명"
+            className="h-9 min-w-[160px] flex-1 border border-border bg-background px-3 text-sm"
+          />
           <input
             ref={photoInputRef}
             type="file"
@@ -86,12 +131,45 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
             onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
             className="text-sm"
           />
-          <Button type="button" size="sm" disabled={isPending || !photoFile} onClick={handleAddPhoto}>추가</Button>
+          <Button type="button" size="sm" disabled={isPending || !photoFile} onClick={handleAddPhoto}>
+            추가
+          </Button>
         </div>
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
-      <AdminConfirmDialog open={deleteOpen} title="앨범 삭제" description={`「${album.title}」 앨범을 삭제합니다.`} confirmLabel="삭제" destructive loading={isPending} onConfirm={() => startTransition(async () => { await deleteGalleryAlbum(album.id); router.push("/admin/gallery"); router.refresh(); })} onCancel={() => setDeleteOpen(false)} />
-      <AdminConfirmDialog open={deletePhotoTarget !== null} title="사진 삭제" description="이 사진을 삭제하시겠습니까?" confirmLabel="삭제" destructive loading={isPending} onConfirm={() => { if (!deletePhotoTarget) return; startTransition(async () => { await deleteGalleryPhoto(deletePhotoTarget.id); setDeletePhotoTarget(null); router.refresh(); }); }} onCancel={() => setDeletePhotoTarget(null)} />
+      <AdminConfirmDialog
+        open={deleteOpen}
+        title="앨범 삭제"
+        description={`「${album.title}」 앨범을 삭제합니다.`}
+        confirmLabel="삭제"
+        destructive
+        loading={isPending}
+        onConfirm={() =>
+          startTransition(async () => {
+            await deleteGalleryAlbum(album.id);
+            router.push("/admin/gallery");
+            router.refresh();
+          })
+        }
+        onCancel={() => setDeleteOpen(false)}
+      />
+      <AdminConfirmDialog
+        open={deletePhotoTarget !== null}
+        title="사진 삭제"
+        description="이 사진을 삭제하시겠습니까?"
+        confirmLabel="삭제"
+        destructive
+        loading={isPending}
+        onConfirm={() => {
+          if (!deletePhotoTarget) return;
+          startTransition(async () => {
+            await deleteGalleryPhoto(deletePhotoTarget.id);
+            setDeletePhotoTarget(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeletePhotoTarget(null)}
+      />
     </>
   );
 }

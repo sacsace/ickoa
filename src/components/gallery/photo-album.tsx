@@ -24,17 +24,26 @@ const bentoSpans = [
 
 function AlbumTile({ album, locale, span }: { album: GalleryAlbum; locale: "ko" | "en"; span: string }) {
   const title = locale === "ko" ? album.title : album.titleEn;
+  const coverSrc = album.cover || album.photos[0]?.src || "/image/hero-community.jpg";
+  const [coverFailed, setCoverFailed] = useState(false);
+  const showImage = Boolean(coverSrc) && !coverFailed;
 
   return (
     <Link href={`/gallery/${album.id}`} className={cn("group block min-h-[200px]", span)}>
-      <div className="relative h-full min-h-[200px] overflow-hidden border border-border">
-        <Image
-          src={album.cover}
-          alt={title}
-          fill
-          className="object-cover transition-transform duration-700 group-hover:scale-105"
-          sizes="(max-width:768px) 100vw, 50vw"
-        />
+      <div className="relative h-full min-h-[200px] overflow-hidden border border-border bg-muted">
+        {showImage ? (
+          <Image
+            src={coverSrc}
+            alt={title}
+            fill
+            unoptimized={coverSrc.startsWith("/gallery/") || coverSrc.startsWith("/uploads/")}
+            className="object-cover transition-transform duration-700 group-hover:scale-105"
+            sizes="(max-width:768px) 100vw, 50vw"
+            onError={() => setCoverFailed(true)}
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-muted to-muted-foreground/30" />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
         <div className="absolute inset-0 flex flex-col justify-end p-5 md:p-6">
           <p className="text-[11px] font-medium tracking-[0.14em] text-white/65 uppercase">
@@ -85,6 +94,11 @@ function Lightbox({
             src={photo.src}
             alt={photo.caption}
             fill
+            unoptimized={
+              photo.src.startsWith("/gallery/") ||
+              photo.src.startsWith("/uploads/") ||
+              photo.src.startsWith("/history/")
+            }
             className="object-contain"
             sizes="(max-width:1024px) calc(100vw - 2rem), 1024px"
           />

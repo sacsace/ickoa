@@ -321,64 +321,82 @@ export async function deleteActivityReport(id: string) {
 
 /* ── 회장단 ── */
 
-export async function createLeadershipMember(data: {
-  name: string;
-  nameEn?: string;
-  role: string;
-  bio?: string;
-  image?: string;
-  level?: number;
-  published?: boolean;
-}) {
+async function resolveLeadershipImage(
+  imageFile: File | null | undefined,
+  imageUrlInput: string | null | undefined,
+  previousImage?: string | null,
+) {
+  const urlInput = imageUrlInput?.trim() || "";
+  if (imageFile && imageFile.size > 0) {
+    if (imageFile.size > MAX_HISTORY_IMAGE_BYTES) {
+      throw new Error("사진 크기는 10MB 이하여야 합니다.");
+    }
+    const mime = imageFile.type || "";
+    if (!HISTORY_IMAGE_TYPES.has(mime)) {
+      throw new Error("JPEG, PNG, WebP, GIF 이미지만 업로드할 수 있습니다.");
+    }
+    const { uploadFile } = await import("@/lib/s3");
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    return uploadFile(buffer, imageFile.name, mime);
+  }
+  if (urlInput) return urlInput;
+  return previousImage ?? null;
+}
+
+export async function createLeadershipMember(formData: FormData) {
   await requireContentAdmin();
-  const name = data.name.trim();
-  const role = data.role.trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "");
+  const imageUrl = String(formData.get("imageUrl") ?? "");
+  const imageFile = formData.get("image") as File | null;
+  const level = Math.min(4, Math.max(1, Number(formData.get("level")) || 1));
+  const published = String(formData.get("published") ?? "") === "1";
   if (!name || !role) throw new Error("이름과 직책을 입력해 주세요.");
 
-  const level = Math.min(4, Math.max(1, Number(data.level) || 1));
   const maxOrder = await prisma.leadershipMember.aggregate({
     where: { level },
     _max: { order: true },
   });
   const order = (maxOrder._max.order ?? 0) + 1;
+  const image = await resolveLeadershipImage(imageFile, imageUrl, null);
 
   const member = await prisma.leadershipMember.create({
     data: {
       name,
-      nameEn: data.nameEn?.trim() || null,
+      nameEn: nameEn || null,
       role,
-      bio: data.bio?.trim() || null,
-      image: data.image?.trim() || null,
+      bio: bio.trim() || null,
+      image,
       level,
       order,
-      published: data.published ?? true,
+      published,
     },
   });
   revalidateAbout("/about/leadership", "/admin/about/leadership");
   return member;
 }
 
-export async function updateLeadershipMember(
-  id: string,
-  data: {
-    name: string;
-    nameEn?: string;
-    role: string;
-    bio?: string;
-    image?: string;
-    level?: number;
-    published?: boolean;
-  },
-) {
+export async function updateLeadershipMember(id: string, formData: FormData) {
   await requireContentAdmin();
   const existing = await prisma.leadershipMember.findUnique({ where: { id } });
   if (!existing) throw new Error("Not found");
 
-  const name = data.name.trim();
-  const role = data.role.trim();
+  const name = String(formData.get("name") ?? "").trim();
+  const role = String(formData.get("role") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const bio = String(formData.get("bio") ?? "");
+  const imageUrl = String(formData.get("imageUrl") ?? "");
+  const clearImage = String(formData.get("clearImage") ?? "") === "1";
+  const imageFile = formData.get("image") as File | null;
+  const level = Math.min(
+    4,
+    Math.max(1, Number(formData.get("level")) || existing.level || 1),
+  );
+  const published = String(formData.get("published") ?? "") === "1";
   if (!name || !role) throw new Error("이름과 직책을 입력해 주세요.");
 
-  const level = Math.min(4, Math.max(1, Number(data.level) || existing.level || 1));
   let order = existing.order;
   if (level !== existing.level) {
     const maxOrder = await prisma.leadershipMember.aggregate({
@@ -388,17 +406,24 @@ export async function updateLeadershipMember(
     order = (maxOrder._max.order ?? 0) + 1;
   }
 
+  let image: string | null = existing.image;
+  if (clearImage && !(imageFile && imageFile.size > 0) && !imageUrl.trim()) {
+    image = null;
+  } else {
+    image = await resolveLeadershipImage(imageFile, imageUrl, existing.image);
+  }
+
   const member = await prisma.leadershipMember.update({
     where: { id },
     data: {
       name,
-      nameEn: data.nameEn?.trim() || null,
+      nameEn: nameEn || null,
       role,
-      bio: data.bio?.trim() || null,
-      image: data.image?.trim() || null,
+      bio: bio.trim() || null,
+      image,
       level,
       order,
-      published: data.published ?? true,
+      published,
     },
   });
   revalidateAbout(

@@ -13,13 +13,19 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "25mb",
     },
   },
-  // Serve /history/* from volume via route handler before public/ static 404s.
+  // Serve uploaded media from volume before public/ static 404s.
+  // Gallery page routes (/gallery, /gallery/[slug]) are excluded by file-ext match.
   async rewrites() {
     return {
       beforeFiles: [
         {
           source: "/history/:path*",
           destination: "/api/history/:path*",
+        },
+        {
+          source:
+            "/gallery/:file([^/]+\\.(?:jpe?g|png|webp|gif|JPE?G|PNG|WEBP|GIF))",
+          destination: "/api/gallery/:file",
         },
       ],
     };

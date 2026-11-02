@@ -41,6 +41,11 @@ export function AlbumDetailClient({ album }: { album: GalleryAlbum }) {
                 src={photo.src}
                 alt={photo.caption}
                 fill
+                unoptimized={
+                  photo.src.startsWith("/gallery/") ||
+                  photo.src.startsWith("/uploads/") ||
+                  photo.src.startsWith("/history/")
+                }
                 className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 sizes="(max-width:768px) 50vw, 33vw"
               />
