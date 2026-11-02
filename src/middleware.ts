@@ -14,15 +14,24 @@ function isAdminRole(role?: string | null) {
   return !!role && ADMIN_ROLES.has(role);
 }
 
+async function readAuthToken(req: NextRequest) {
+  const secret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET;
+  // HTTPS(운영)는 `__Secure-authjs.session-token`, 로컬 HTTP는 `authjs.session-token`.
+  // secureCookie를 생략하면 항상 비보안 이름만 찾아 운영에서 세션이 있어도 /admin이 튕긴다.
+  const secure =
+    req.nextUrl.protocol === "https:" ||
+    req.headers.get("x-forwarded-proto") === "https";
+  const primary = await getToken({ req, secret, secureCookie: secure });
+  if (primary) return primary;
+  return getToken({ req, secret, secureCookie: !secure });
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const isAdminLogin = pathname === "/admin/login";
   const isAdminRoute = pathname.startsWith("/admin") && !isAdminLogin;
 
-  const token = await getToken({
-    req,
-    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
-  });
+  const token = await readAuthToken(req);
 
   const adminRole =
     (token?.adminRole as string | undefined) ??
