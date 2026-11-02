@@ -12,19 +12,115 @@ import { prisma } from "@/lib/prisma";
 import { plainTextFromHtml, sanitizePostHtml } from "@/lib/sanitize-html";
 import { getSiteUser } from "@/lib/session-kind";
 import { canManageSiteResource } from "@/lib/site-permissions";
+import { absoluteUrl } from "@/lib/seo";
+import { getOrCreateMailSetting, sendSiteMail } from "@/lib/mail";
+
+function escapeHtml(text: string) {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+async function notifyPostAuthorOfComment(options: {
+  postId: string;
+  commenterId: string;
+  commenterName: string;
+  commentContent: string;
+}) {
+  const post = await prisma.post.findUnique({
+    where: { id: options.postId },
+    select: {
+      id: true,
+      title: true,
+      authorId: true,
+      author: { select: { id: true, name: true, email: true } },
+      board: { select: { slug: true, name: true } },
+    },
+  });
+  if (!post) return;
+  // 본인 글에 본인이 댓글 단 경우 알림 생략
+  if (post.authorId === options.commenterId) return;
+
+  const link = `/community/${post.board.slug}/${post.id}`;
+  const preview =
+    options.commentContent.trim().slice(0, 200) +
+    (options.commentContent.trim().length > 200 ? "…" : "");
+  const title = "새 댓글 알림";
+  const body = `${options.commenterName}님이 「${post.title}」에 댓글을 남겼습니다.`;
+
+  await prisma.notification.create({
+    data: {
+      userId: post.authorId,
+      title,
+      body,
+      link,
+    },
+  });
+
+  const authorEmail = post.author.email?.trim();
+  if (!authorEmail) return;
+
+  const setting = await getOrCreateMailSetting();
+  if (!setting.enabled) return;
+
+  const postUrl = absoluteUrl(link);
+  try {
+    await sendSiteMail({
+      to: authorEmail,
+      subject: `[KAIC] ${body}`,
+      text: [
+        body,
+        "",
+        `게시판: ${post.board.name}`,
+        `게시글: ${post.title}`,
+        `댓글 작성자: ${options.commenterName}`,
+        "",
+        preview,
+        "",
+        `바로가기: ${postUrl}`,
+      ].join("\n"),
+      html: [
+        `<p>${escapeHtml(body)}</p>`,
+        `<p><strong>게시판</strong>: ${escapeHtml(post.board.name)}</p>`,
+        `<p><strong>게시글</strong>: ${escapeHtml(post.title)}</p>`,
+        `<p><strong>댓글 작성자</strong>: ${escapeHtml(options.commenterName)}</p>`,
+        `<blockquote style="margin:16px 0;padding:12px 16px;border-left:3px solid #1b2f44;background:#f5f7fa;">${escapeHtml(preview)}</blockquote>`,
+        `<p><a href="${postUrl}">게시글 보기</a></p>`,
+      ].join(""),
+    });
+  } catch {
+    // 댓글 등록은 유지하고 메일 실패는 무시
+  }
+}
 
 export async function createComment(postId: string, content: string) {
   const session = await auth();
   if (!session?.user) throw new Error("Unauthorized");
 
+  const text = content.trim();
+  if (!text) throw new Error("댓글 내용을 입력해 주세요.");
+
   const comment = await prisma.comment.create({
     data: {
       postId,
       authorId: session.user.id,
-      content,
+      content: text,
     },
     include: { author: { select: { id: true, name: true, image: true } } },
   });
+
+  try {
+    await notifyPostAuthorOfComment({
+      postId,
+      commenterId: session.user.id,
+      commenterName: comment.author.name?.trim() || "회원",
+      commentContent: text,
+    });
+  } catch {
+    // 댓글은 유지하고 알림/메일 실패는 무시
+  }
 
   revalidatePath(`/community`);
   return comment;

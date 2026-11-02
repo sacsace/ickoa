@@ -173,23 +173,28 @@ export default async function AboutSubPage({
                         />
                       ) : null}
                       <div className="border border-border bg-card px-5 py-5 md:px-7 md:py-6">
-                        <p className="text-base font-semibold leading-snug">{entry.title}</p>
-                        {entry.description ? (
-                          <div className="mt-2">
-                            <RichHtmlBody
-                              content={entry.description}
-                              className="text-sm leading-relaxed text-muted-foreground [&_p]:mb-1"
-                            />
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-base font-semibold leading-snug">
+                              {entry.title}
+                            </p>
+                            {entry.description ? (
+                              <div className="mt-2">
+                                <RichHtmlBody
+                                  content={entry.description}
+                                  className="text-sm leading-relaxed text-muted-foreground [&_p]:mb-1"
+                                />
+                              </div>
+                            ) : null}
                           </div>
-                        ) : null}
-                        {entry.image ? (
-                          <HistoryImage
-                            src={entry.image}
-                            alt={entry.title}
-                            wrapClassName="mt-4"
-                            className="max-h-72 w-full"
-                          />
-                        ) : null}
+                          {entry.image ? (
+                            <HistoryImage
+                              src={entry.image}
+                              alt={entry.title}
+                              wrapClassName="mt-0 shrink-0"
+                            />
+                          ) : null}
+                        </div>
                       </div>
                     </div>
                   </li>
