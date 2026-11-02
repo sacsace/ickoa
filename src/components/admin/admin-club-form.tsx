@@ -4,10 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminAlertDialog } from "@/components/admin/admin-alert-dialog";
 import { Button } from "@/components/ui/button";
 import { ContentEditor } from "@/components/community/content-editor";
-import { useAlert } from "@/components/providers/alert-provider";
 import { createClub, updateClub } from "@/actions/admin";
+import type { AdminDialogVariant } from "@/components/admin/admin-dialog";
 
 export function AdminClubForm({
   mode,
@@ -25,9 +26,14 @@ export function AdminClubForm({
   };
 }) {
   const router = useRouter();
-  const alert = useAlert();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [alert, setAlert] = useState<{
+    title: string;
+    message: string;
+    variant: AdminDialogVariant;
+    redirect?: boolean;
+  } | null>(null);
   const [form, setForm] = useState({
     name: club?.name ?? "",
     slug: club?.slug ?? "",
@@ -55,21 +61,20 @@ export function AdminClubForm({
         } else {
           await createClub(payload);
         }
-        await alert({
+        setAlert({
           title: mode === "edit" ? "수정 완료" : "등록 완료",
           message: "동호회가 저장되었습니다.",
           variant: "success",
+          redirect: true,
         });
-        router.push("/admin/clubs");
-        router.refresh();
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "저장에 실패했습니다.";
         setError(message);
-        await alert({
+        setAlert({
           title: "저장 실패",
           message,
-          variant: "error",
+          variant: "destructive",
         });
       }
     });
@@ -162,6 +167,20 @@ export function AdminClubForm({
           </Button>
         </div>
       </form>
+      <AdminAlertDialog
+        open={alert !== null}
+        title={alert?.title}
+        message={alert?.message ?? ""}
+        variant={alert?.variant ?? "default"}
+        onClose={() => {
+          const shouldRedirect = alert?.redirect;
+          setAlert(null);
+          if (shouldRedirect) {
+            router.push("/admin/clubs");
+            router.refresh();
+          }
+        }}
+      />
     </>
   );
 }

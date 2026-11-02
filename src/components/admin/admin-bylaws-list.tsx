@@ -14,6 +14,7 @@ import {
   useAdminList,
 } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
+import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { deleteBylaw } from "@/actions/about";
 
 type BylawItem = {
@@ -27,6 +28,7 @@ export function AdminBylawsList({ items }: { items: BylawItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<BylawItem | null>(null);
   const getSearchText = useCallback((item: BylawItem) => item.title, []);
   const list = useAdminList(items, getSearchText);
 
@@ -96,14 +98,7 @@ export function AdminBylawsList({ items }: { items: BylawItem[] }) {
                       size="sm"
                       variant="outline"
                       disabled={isPending && deletingId === item.id}
-                      onClick={() => {
-                        if (!confirm(`「${item.title}」을(를) 삭제할까요?`)) return;
-                        setDeletingId(item.id);
-                        startTransition(async () => {
-                          await deleteBylaw(item.id);
-                          router.refresh();
-                        });
-                      }}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       삭제
                     </Button>
@@ -127,6 +122,29 @@ export function AdminBylawsList({ items }: { items: BylawItem[] }) {
         page={list.page}
         totalPages={list.totalPages}
         onPageChange={list.setPage}
+      />
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="정관 삭제"
+        description={
+          deleteTarget
+            ? `「${deleteTarget.title}」을(를) 삭제합니다. 삭제 후 복구할 수 없습니다.`
+            : ""
+        }
+        confirmLabel="삭제"
+        destructive
+        loading={isPending && deletingId === deleteTarget?.id}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const id = deleteTarget.id;
+          setDeletingId(id);
+          startTransition(async () => {
+            await deleteBylaw(id);
+            setDeleteTarget(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );

@@ -18,7 +18,7 @@ import { useLocale } from "@/components/providers/locale-provider";
 import { PortalBox } from "@/components/ui/portal-box";
 import { Button } from "@/components/ui/button";
 import { HeroSlider } from "@/components/sections/hero-slider";
-import { MagazinePdfCover } from "@/components/magazine/magazine-pdf-cover";
+import { MagazinePdfCoverLazy } from "@/components/magazine/magazine-pdf-cover-lazy";
 import type { HeroSlideData } from "@/data/hero";
 import type { GalleryAlbum } from "@/data/gallery";
 import type { MagazineIssue } from "@/data/dynamic-korean";
@@ -272,7 +272,7 @@ export function PortalHome({
                 className="flex gap-4 p-4 hover:bg-muted"
               >
                 <div className="relative h-[140px] w-[100px] shrink-0 overflow-hidden border border-border bg-muted">
-                  <MagazinePdfCover
+                  <MagazinePdfCoverLazy
                     pdfUrl={magazine.pdfUrl}
                     fallbackSrc={magazine.coverImage}
                     alt={magazine.title}

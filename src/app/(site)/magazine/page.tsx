@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { MagazinePdfCover } from "@/components/magazine/magazine-pdf-cover";
+import { MagazinePdfCoverLazy } from "@/components/magazine/magazine-pdf-cover-lazy";
 import { getPublishedMagazineIssues } from "@/lib/magazine-data";
 import { magazineMeta } from "@/data/dynamic-korean";
 import { createMetadata } from "@/lib/seo";
@@ -33,7 +33,7 @@ export default async function MagazinePage() {
             <article key={issue.id} className="community-card overflow-hidden">
               <Link href={`/magazine/${issue.id}`} className="group block">
                 <div className="relative aspect-[3/4] transition-transform group-hover:scale-[1.02]">
-                  <MagazinePdfCover
+                  <MagazinePdfCoverLazy
                     pdfUrl={issue.pdfUrl}
                     fallbackSrc={issue.coverImage}
                     alt={`Vol.${issue.volume}`}

@@ -3,7 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { Download, ArrowLeft, BookOpen } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
-import { MagazinePdfCover } from "@/components/magazine/magazine-pdf-cover";
+import { MagazinePdfCoverLazy } from "@/components/magazine/magazine-pdf-cover-lazy";
 import { getMagazineIssue } from "@/lib/magazine-data";
 import { magazineMeta } from "@/data/dynamic-korean";
 import { createMetadata } from "@/lib/seo";
@@ -56,7 +56,7 @@ export default async function MagazineIssuePage({
       <div className="mx-auto max-w-7xl px-4 py-12 md:px-8">
         <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-start">
           <div className="relative mx-auto aspect-[3/4] w-full max-w-xs shrink-0 overflow-hidden rounded-2xl shadow-lg md:mx-0">
-            <MagazinePdfCover
+            <MagazinePdfCoverLazy
               pdfUrl={issue.pdfUrl}
               fallbackSrc={issue.coverImage}
               alt={`Vol.${issue.volume} cover`}

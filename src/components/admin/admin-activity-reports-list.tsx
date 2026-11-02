@@ -14,6 +14,7 @@ import {
   useAdminList,
 } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
+import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { deleteActivityReport } from "@/actions/about";
 
 type ReportItem = {
@@ -28,6 +29,7 @@ export function AdminReportsAboutList({ items }: { items: ReportItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ReportItem | null>(null);
   const getSearchText = useCallback(
     (item: ReportItem) => `${item.year ?? ""} ${item.title}`,
     [],
@@ -100,14 +102,7 @@ export function AdminReportsAboutList({ items }: { items: ReportItem[] }) {
                       size="sm"
                       variant="outline"
                       disabled={isPending && deletingId === item.id}
-                      onClick={() => {
-                        if (!confirm(`「${item.title}」을(를) 삭제할까요?`)) return;
-                        setDeletingId(item.id);
-                        startTransition(async () => {
-                          await deleteActivityReport(item.id);
-                          router.refresh();
-                        });
-                      }}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       삭제
                     </Button>
@@ -133,6 +128,29 @@ export function AdminReportsAboutList({ items }: { items: ReportItem[] }) {
         page={list.page}
         totalPages={list.totalPages}
         onPageChange={list.setPage}
+      />
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="활동 보고서 삭제"
+        description={
+          deleteTarget
+            ? `「${deleteTarget.title}」을(를) 삭제합니다. 삭제 후 복구할 수 없습니다.`
+            : ""
+        }
+        confirmLabel="삭제"
+        destructive
+        loading={isPending && deletingId === deleteTarget?.id}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const id = deleteTarget.id;
+          setDeletingId(id);
+          startTransition(async () => {
+            await deleteActivityReport(id);
+            setDeleteTarget(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );

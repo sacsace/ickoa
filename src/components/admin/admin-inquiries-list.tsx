@@ -3,8 +3,10 @@
 import { useCallback, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminDialog } from "@/components/admin/admin-dialog";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminEmptyRow, formatKoDateTime } from "@/components/admin/admin-board-ui";
+import { Button } from "@/components/ui/button";
 import {
   AdminListControls,
   AdminListPaginationFooter,
@@ -160,38 +162,32 @@ export function AdminInquiriesList({
         onPageChange={list.setPage}
       />
 
-      {selected ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-          onClick={() => setSelected(null)}
-        >
-          <div
-            className="max-h-[85vh] w-full max-w-2xl overflow-y-auto border border-border bg-white p-5 shadow-lg"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-start justify-between gap-3">
-              <div>
-                <h2 className="text-base font-semibold">{selected.subject}</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {formatKoDateTime(selected.createdAt)} · {selected.name} · {selected.email}
-                  {selected.phone ? ` · ${selected.phone}` : ""}
-                </p>
-              </div>
-              <button
-                type="button"
-                className="text-sm text-muted-foreground hover:text-foreground"
-                onClick={() => setSelected(null)}
-              >
-                닫기
-              </button>
-            </div>
-            <RichHtmlBody
-              content={selected.message}
-              className="prose prose-sm max-w-none"
-            />
-          </div>
-        </div>
-      ) : null}
+      <AdminDialog
+        open={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.subject ?? "문의"}
+        description={
+          selected
+            ? `${formatKoDateTime(selected.createdAt)} · ${selected.name} · ${selected.email}${
+                selected.phone ? ` · ${selected.phone}` : ""
+              }`
+            : undefined
+        }
+        maxWidth="2xl"
+        scrollBody
+        footer={
+          <Button type="button" size="sm" variant="outline" onClick={() => setSelected(null)}>
+            닫기
+          </Button>
+        }
+      >
+        {selected ? (
+          <RichHtmlBody
+            content={selected.message}
+            className="prose prose-sm max-w-none"
+          />
+        ) : null}
+      </AdminDialog>
 
       <AdminConfirmDialog
         open={deleteTarget !== null}

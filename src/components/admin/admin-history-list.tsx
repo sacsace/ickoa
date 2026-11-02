@@ -15,6 +15,7 @@ import {
   useAdminList,
 } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
+import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import {
   deleteHistoryEntry,
   moveHistoryEntry,
@@ -29,6 +30,22 @@ type HistoryItem = {
   image?: string | null;
   order: number;
 };
+
+function HistoryThumb({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false);
+  if (failed) {
+    return <span className="text-xs text-muted-foreground">—</span>;
+  }
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      className="mx-auto h-10 w-14 object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 function OrderControls({
   item,
@@ -110,6 +127,7 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<HistoryItem | null>(null);
   const [movingId, setMovingId] = useState<string | null>(null);
   const getSearchText = useCallback(
     (item: HistoryItem) =>
@@ -196,12 +214,7 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
                   </td>
                   <td className="px-3 py-3 text-center">
                     {item.image ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={item.image}
-                        alt=""
-                        className="mx-auto h-10 w-14 object-cover"
-                      />
+                      <HistoryThumb src={item.image} />
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
@@ -243,14 +256,7 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
                         size="sm"
                         variant="outline"
                         disabled={isPending && deletingId === item.id}
-                        onClick={() => {
-                          if (!confirm(`「${item.title}」을(를) 삭제할까요?`)) return;
-                          setDeletingId(item.id);
-                          startTransition(async () => {
-                            await deleteHistoryEntry(item.id);
-                            router.refresh();
-                          });
-                        }}
+                        onClick={() => setDeleteTarget(item)}
                       >
                         삭제
                       </Button>
@@ -275,6 +281,29 @@ export function AdminHistoryList({ items }: { items: HistoryItem[] }) {
         page={list.page}
         totalPages={list.totalPages}
         onPageChange={list.setPage}
+      />
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="연혁 삭제"
+        description={
+          deleteTarget
+            ? `「${deleteTarget.title}」을(를) 삭제합니다. 삭제 후 복구할 수 없습니다.`
+            : ""
+        }
+        confirmLabel="삭제"
+        destructive
+        loading={isPending && deletingId === deleteTarget?.id}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const id = deleteTarget.id;
+          setDeletingId(id);
+          startTransition(async () => {
+            await deleteHistoryEntry(id);
+            setDeleteTarget(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );

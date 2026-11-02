@@ -35,7 +35,8 @@ async function writeLocalFile(
   filename: string,
   buffer: Buffer,
 ): Promise<string> {
-  const safeName = filename.replace(/[^\w.\-()]/g, "_");
+  // Keep URL-safe names only — parentheses/spaces break some static hosts.
+  const safeName = filename.replace(/[^\w.\-]/g, "_");
   const localName = `${Date.now()}-${safeName}`;
   const uploadDir = path.join(getUploadRoot(), folder);
   await mkdir(uploadDir, { recursive: true });
@@ -95,7 +96,10 @@ export async function uploadToHistoryFolder(
   filename: string,
   mimeType: string,
 ): Promise<string> {
-  return uploadToFolder(buffer, filename, mimeType, "history");
+  // Store under /uploads (volume already mounted & served on Railway).
+  // Keep a history- prefix so files are easy to find.
+  const stamped = `history-${filename}`;
+  return uploadToFolder(buffer, stamped, mimeType, "uploads");
 }
 
 async function uploadToFolder(
@@ -104,7 +108,7 @@ async function uploadToFolder(
   mimeType: string,
   folder: string,
 ): Promise<string> {
-  const safeName = filename.replace(/[^\w.\-()]/g, "_");
+  const safeName = filename.replace(/[^\w.\-]/g, "_");
   const key = `${folder}/${Date.now()}-${safeName}`;
 
   if (s3) {

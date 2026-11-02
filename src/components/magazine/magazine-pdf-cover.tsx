@@ -2,10 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { pdfjs } from "react-pdf";
 import { cn } from "@/lib/utils";
-
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
 
 type MagazinePdfCoverProps = {
   pdfUrl?: string | null;
@@ -21,6 +18,7 @@ type MagazinePdfCoverProps = {
 /**
  * Renders the first page of a magazine PDF as the cover.
  * Falls back to coverImage while loading or if PDF rendering fails.
+ * pdf.js is imported only in the browser — never at module top-level (SSR).
  */
 export function MagazinePdfCover({
   pdfUrl,
@@ -47,6 +45,9 @@ export function MagazinePdfCover({
 
     (async () => {
       try {
+        const { pdfjs } = await import("react-pdf");
+        pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+
         const loadingTask = pdfjs.getDocument({
           url: pdfUrl,
           withCredentials: false,

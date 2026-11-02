@@ -13,6 +13,17 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "25mb",
     },
   },
+  // Serve /history/* from volume via route handler before public/ static 404s.
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: "/history/:path*",
+          destination: "/api/history/:path*",
+        },
+      ],
+    };
+  },
   images: {
     qualities: [75, 90],
     remotePatterns: [

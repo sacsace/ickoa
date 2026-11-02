@@ -14,6 +14,7 @@ import {
   useAdminList,
 } from "@/components/admin/admin-list-controls";
 import { Button } from "@/components/ui/button";
+import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { deleteLeadershipMember } from "@/actions/about";
 import { LEADERSHIP_LEVELS, inferLeadershipLevel } from "@/lib/leadership";
 
@@ -35,6 +36,7 @@ export function AdminLeadershipList({ items }: { items: MemberItem[] }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MemberItem | null>(null);
 
   const normalized = useMemo((): NormalizedMember[] => {
     return items.map((item) => {
@@ -127,14 +129,7 @@ export function AdminLeadershipList({ items }: { items: MemberItem[] }) {
                       size="sm"
                       variant="outline"
                       disabled={isPending && deletingId === item.id}
-                      onClick={() => {
-                        if (!confirm(`「${item.name}」을(를) 삭제할까요?`)) return;
-                        setDeletingId(item.id);
-                        startTransition(async () => {
-                          await deleteLeadershipMember(item.id);
-                          router.refresh();
-                        });
-                      }}
+                      onClick={() => setDeleteTarget(item)}
                     >
                       삭제
                     </Button>
@@ -158,6 +153,29 @@ export function AdminLeadershipList({ items }: { items: MemberItem[] }) {
         page={list.page}
         totalPages={list.totalPages}
         onPageChange={list.setPage}
+      />
+      <AdminConfirmDialog
+        open={deleteTarget !== null}
+        title="회장단 삭제"
+        description={
+          deleteTarget
+            ? `「${deleteTarget.name}」을(를) 삭제합니다. 삭제 후 복구할 수 없습니다.`
+            : ""
+        }
+        confirmLabel="삭제"
+        destructive
+        loading={isPending && deletingId === deleteTarget?.id}
+        onConfirm={() => {
+          if (!deleteTarget) return;
+          const id = deleteTarget.id;
+          setDeletingId(id);
+          startTransition(async () => {
+            await deleteLeadershipMember(id);
+            setDeleteTarget(null);
+            router.refresh();
+          });
+        }}
+        onCancel={() => setDeleteTarget(null)}
       />
     </>
   );

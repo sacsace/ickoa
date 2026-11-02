@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { LeadershipOrgChart } from "@/components/about/leadership-org-chart";
 import { CiLogoGallery } from "@/components/about/ci-logo-gallery";
 import { RegistrationDocsGallery } from "@/components/about/registration-docs-gallery";
+import { HistoryImage } from "@/components/about/history-image";
 import { RichHtmlBody } from "@/components/ui/rich-html-body";
 import { createMetadata } from "@/lib/seo";
 import { ensureAboutDefaults } from "@/lib/about-defaults";
@@ -182,14 +183,12 @@ export default async function AboutSubPage({
                           </div>
                         ) : null}
                         {entry.image ? (
-                          <div className="mt-4 overflow-hidden border border-border">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={entry.image}
-                              alt={entry.title}
-                              className="max-h-72 w-full object-cover"
-                            />
-                          </div>
+                          <HistoryImage
+                            src={entry.image}
+                            alt={entry.title}
+                            wrapClassName="mt-4"
+                            className="max-h-72 w-full"
+                          />
                         ) : null}
                       </div>
                     </div>
