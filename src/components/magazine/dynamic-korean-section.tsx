@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ArrowUpRight, Download, BookOpen } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
 import { FadeIn, SectionHeader, SectionShell } from "@/components/ui/motion";
+import { MagazinePdfCover } from "@/components/magazine/magazine-pdf-cover";
 import { magazineMeta, type MagazineIssue } from "@/data/dynamic-korean";
 
 type Props = {
@@ -64,11 +65,10 @@ export function DynamicKoreanSection({ issue }: Props) {
         <FadeIn className="lg:col-span-5">
           <div className="community-card overflow-hidden">
             <div className="relative aspect-[3/4] max-h-[480px]">
-              <Image
-                src={issue.coverImage}
+              <MagazinePdfCover
+                pdfUrl={issue.pdfUrl}
+                fallbackSrc={issue.coverImage}
                 alt={`${magazineMeta.name} Vol.${issue.volume}`}
-                fill
-                className="object-cover object-top"
                 sizes="400px"
               />
             </div>

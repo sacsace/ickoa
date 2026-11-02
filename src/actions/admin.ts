@@ -1120,8 +1120,9 @@ export async function createMagazineIssue(formData: FormData) {
     const coverBuffer = Buffer.from(await coverFile.arrayBuffer());
     coverImage = await uploadMagazineFile(coverBuffer, coverFile.name, coverFile.type);
   }
+  // Cover is optional — site UI renders PDF page 1 as the main image when pdfUrl exists.
   if (!coverImage) {
-    throw new Error("표지 이미지 URL 또는 파일을 입력해 주세요.");
+    coverImage = "/magazine/dynamic-korean-cover-vol17.png";
   }
 
   const slug = `vol-${volume}`;

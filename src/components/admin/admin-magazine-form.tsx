@@ -22,17 +22,12 @@ export function AdminMagazineForm() {
     coverUrl: "",
   });
   const [pdfFile, setPdfFile] = useState<File | null>(null);
-  const [hasCover, setHasCover] = useState(false);
 
   function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     if (!pdfFile) {
       setError("PDF 파일을 선택해 주세요.");
-      return;
-    }
-    if (!hasCover && !form.coverUrl.trim()) {
-      setError("표지 이미지 파일 또는 URL을 입력해 주세요.");
       return;
     }
     const fd = new FormData();
@@ -90,8 +85,11 @@ export function AdminMagazineForm() {
           <p className="mt-1 text-xs text-muted-foreground">최대 25MB · PDF 형식</p>
         </div>
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">표지 이미지 *</label>
-          <AdminFileUpload name="cover" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" disabled={isPending} hint="권장 600×800px (3:4) · JPEG/PNG/WebP · 최대 25MB" onFileChange={(f) => setHasCover(!!f)} />
+          <label className="mb-1 block text-xs text-muted-foreground">표지 이미지 (선택)</label>
+          <p className="mb-2 text-xs text-muted-foreground">
+            비워 두면 사이트에서 PDF 첫 페이지를 메인 이미지로 보여 줍니다.
+          </p>
+          <AdminFileUpload name="cover" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" disabled={isPending} hint="권장 600×800px (3:4) · JPEG/PNG/WebP · 최대 25MB" />
           <input value={form.coverUrl} onChange={(e) => setForm({ ...form, coverUrl: e.target.value })} placeholder="또는 표지 이미지 URL" className="mt-2 h-11 w-full border border-border bg-background px-4 text-sm" />
         </div>
         {error && <p className="text-sm text-red-600">{error}</p>}

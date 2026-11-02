@@ -28,7 +28,9 @@ export async function middleware(req: NextRequest) {
     (token?.adminRole as string | undefined) ??
     (token?.sessionKind === "admin"
       ? (token?.role as string | undefined)
-      : undefined);
+      : undefined) ??
+    // 사이트 슬롯만 채워진 SUPER_ADMIN/root 등도 관리자 라우트 허용
+    (token?.siteRole as string | undefined);
 
   const isAdminLoggedIn = isAdminRole(adminRole);
 

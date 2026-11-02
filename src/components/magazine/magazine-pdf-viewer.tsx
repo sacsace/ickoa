@@ -150,16 +150,19 @@ export function MagazinePdfViewer({
   const zoomLabel =
     userZoom === 1 ? "화면 맞춤" : `${Math.round(userZoom * 100)}%`;
 
+  // Site header is sticky in-flow (not fixed overlay). Do not add top padding
+  // or the toolbar floats below an empty gap. Sticky top matches header height:
+  // mobile brand row 72px; desktop utility 32 + brand 72 + GNB 44 = 148px.
   return (
     <div
       ref={containerRef}
       className={cn(
-        "flex h-[calc(100svh-4rem)] flex-col bg-muted/50 pt-16 md:h-[calc(100svh-4.25rem)] md:pt-[4.25rem]",
-        fullscreen && "h-screen bg-muted pt-0",
+        "flex h-[calc(100svh-72px)] flex-col bg-muted/50 md:h-[calc(100svh-148px)]",
+        fullscreen && "h-screen bg-muted",
       )}
     >
-      <div className="sticky top-16 z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur-md md:top-[4.25rem]">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-3 md:gap-3">
+      <div className="sticky top-[72px] z-20 shrink-0 border-b border-border bg-background/95 backdrop-blur-md md:top-[148px]">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2 px-4 py-2.5 md:gap-3">
           <Link
             href={backHref}
             className="text-sm text-muted-foreground hover:text-brand md:mr-2"

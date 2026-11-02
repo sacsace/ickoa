@@ -282,6 +282,10 @@ export const authConfig = {
           assignSite(t, payload);
         } else {
           assignSite(t, payload);
+          // root / SUPER_ADMIN 등이 사이트 로그인만 해도 /admin 진입 가능하게
+          if (isAdmin(payload.role)) {
+            assignAdmin(t, payload);
+          }
         }
       } else if (account && account.provider !== "credentials") {
         // OAuth는 사이트 세션
