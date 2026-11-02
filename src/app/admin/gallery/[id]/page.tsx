@@ -14,11 +14,14 @@ export default async function AdminGalleryDetailPage({
   // Repair Korean/space slugs so "사이트에서 보기" stops 404ing.
   await ensureSafeGallerySlug(id);
 
-  const album = await prisma.galleryAlbum.findUnique({
-    where: { id },
-    include: { photos: { orderBy: { order: "asc" } } },
-  });
+  const [album, categories] = await Promise.all([
+    prisma.galleryAlbum.findUnique({
+      where: { id },
+      include: { photos: { orderBy: { order: "asc" } } },
+    }),
+    prisma.galleryCategory.findMany({ orderBy: { order: "asc" } }),
+  ]);
   if (!album) notFound();
 
-  return <AdminGalleryDetail album={album} />;
+  return <AdminGalleryDetail album={album} categories={categories} />;
 }

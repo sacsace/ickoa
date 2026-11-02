@@ -72,7 +72,7 @@ export function AdminGalleryList({ albums }: { albums: AlbumItem[] }) {
               <th className="w-32 px-3 py-2.5 text-center font-medium text-muted-foreground">슬러그</th>
               <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">사진</th>
               <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">상태</th>
-              <th className="w-20 px-3 py-2.5 text-center font-medium text-muted-foreground">관리</th>
+                  <th className="w-28 px-3 py-2.5 text-center font-medium text-muted-foreground">관리</th>
             </tr>
           </thead>
           <tbody>
@@ -95,7 +95,19 @@ export function AdminGalleryList({ albums }: { albums: AlbumItem[] }) {
                   <td className="px-3 py-3 text-center text-muted-foreground">{photoCount}</td>
                   <td className="px-3 py-3 text-center text-muted-foreground">{item.published ? "공개" : "비공개"}</td>
                   <td className="px-3 py-3 text-center">
-                    <button type="button" disabled={isPending} onClick={() => setDeleteTarget(item)} className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40">삭제</button>
+                    <div className="flex items-center justify-center gap-2">
+                      <Link href={`/admin/gallery/${item.id}`} className="text-xs text-brand hover:underline">
+                        수정
+                      </Link>
+                      <button
+                        type="button"
+                        disabled={isPending}
+                        onClick={() => setDeleteTarget(item)}
+                        className="text-xs text-red-600 hover:text-red-700 disabled:opacity-40"
+                      >
+                        삭제
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );

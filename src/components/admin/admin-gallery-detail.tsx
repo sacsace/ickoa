@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { AdminConfirmDialog } from "@/components/admin/admin-confirm-dialog";
 import { AdminBackLink } from "@/components/admin/admin-board-ui";
@@ -13,28 +13,80 @@ import {
   deleteGalleryAlbum,
   deleteGalleryPhoto,
   toggleGalleryAlbumPublished,
+  updateGalleryAlbum,
 } from "@/actions/admin";
 
 type AlbumDetail = {
   id: string;
   slug: string;
   title: string;
+  titleEn: string;
+  description: string;
+  descriptionEn: string;
+  category: string;
   cover: string;
   published: boolean;
   photos: { id: string; src: string; caption: string }[];
 };
 
-export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
+type CategoryOption = { id: string; name: string; slug: string };
+
+export function AdminGalleryDetail({
+  album,
+  categories = [],
+}: {
+  album: AlbumDetail;
+  categories?: CategoryOption[];
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [metaError, setMetaError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [photoCaption, setPhotoCaption] = useState("");
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ id: string; caption: string } | null>(null);
+  const [meta, setMeta] = useState({
+    title: album.title,
+    titleEn: album.titleEn,
+    slug: album.slug,
+    description: album.description,
+    descriptionEn: album.descriptionEn,
+    category: album.category,
+  });
 
-  const sitePath = `/gallery/${galleryAlbumPathId(album)}`;
+  useEffect(() => {
+    setMeta({
+      title: album.title,
+      titleEn: album.titleEn,
+      slug: album.slug,
+      description: album.description,
+      descriptionEn: album.descriptionEn,
+      category: album.category,
+    });
+  }, [
+    album.title,
+    album.titleEn,
+    album.slug,
+    album.description,
+    album.descriptionEn,
+    album.category,
+  ]);
+
+  const sitePath = `/gallery/${galleryAlbumPathId({ id: album.id, slug: meta.slug || album.slug })}`;
+
+  function handleSaveMeta() {
+    setMetaError(null);
+    startTransition(async () => {
+      try {
+        await updateGalleryAlbum(album.id, meta);
+        router.refresh();
+      } catch (err) {
+        setMetaError(err instanceof Error ? err.message : "앨범 정보 저장 실패");
+      }
+    });
+  }
 
   function handleAddPhoto() {
     setError(null);
@@ -88,6 +140,83 @@ export function AdminGalleryDetail({ album }: { album: AlbumDetail }) {
           앨범 삭제
         </Button>
       </div>
+
+      <div className="mb-6 border border-border p-4">
+        <h3 className="mb-3 text-sm font-medium">앨범 정보</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">제목 (한국어) *</label>
+            <input
+              value={meta.title}
+              onChange={(e) => setMeta({ ...meta, title: e.target.value })}
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">Title (English)</label>
+            <input
+              value={meta.titleEn}
+              onChange={(e) => setMeta({ ...meta, titleEn: e.target.value })}
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">슬러그 (영문·숫자·하이픈)</label>
+            <input
+              value={meta.slug}
+              onChange={(e) => setMeta({ ...meta, slug: e.target.value })}
+              className="h-10 w-full border border-border bg-background px-3 text-sm"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs text-muted-foreground">카테고리</label>
+            {categories.length > 0 ? (
+              <select
+                value={meta.category}
+                onChange={(e) => setMeta({ ...meta, category: e.target.value })}
+                className="h-10 w-full border border-border bg-background px-3 text-sm"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.slug}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <input
+                value={meta.category}
+                onChange={(e) => setMeta({ ...meta, category: e.target.value })}
+                className="h-10 w-full border border-border bg-background px-3 text-sm"
+              />
+            )}
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs text-muted-foreground">설명 (한국어)</label>
+            <textarea
+              value={meta.description}
+              onChange={(e) => setMeta({ ...meta, description: e.target.value })}
+              rows={2}
+              className="w-full border border-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="mb-1 block text-xs text-muted-foreground">Description (English)</label>
+            <textarea
+              value={meta.descriptionEn}
+              onChange={(e) => setMeta({ ...meta, descriptionEn: e.target.value })}
+              rows={2}
+              className="w-full border border-border bg-background px-3 py-2 text-sm"
+            />
+          </div>
+        </div>
+        {metaError && <p className="mt-2 text-sm text-red-600">{metaError}</p>}
+        <div className="mt-3">
+          <Button type="button" size="sm" disabled={isPending || !meta.title.trim()} onClick={handleSaveMeta}>
+            {isPending ? "저장 중..." : "정보 저장"}
+          </Button>
+        </div>
+      </div>
+
       <div className="mb-6 flex flex-wrap gap-2">
         {album.photos.map((p) => (
           <div key={p.id} className="text-sm">

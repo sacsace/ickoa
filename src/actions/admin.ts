@@ -1390,6 +1390,58 @@ export async function createGalleryAlbum(formData: FormData) {
   return album;
 }
 
+export async function updateGalleryAlbum(
+  id: string,
+  data: {
+    title: string;
+    titleEn?: string;
+    slug?: string;
+    description?: string;
+    descriptionEn?: string;
+    category?: string;
+  },
+) {
+  await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
+
+  const { slugifyGallery, isSafeGallerySlug } = await import("@/lib/gallery-data");
+  const title = data.title.trim();
+  if (!title) throw new Error("제목을 입력해 주세요.");
+
+  const existing = await prisma.galleryAlbum.findUnique({ where: { id } });
+  if (!existing) throw new Error("앨범을 찾을 수 없습니다.");
+
+  const titleEn = (data.titleEn ?? "").trim() || title;
+  const description = (data.description ?? "").trim();
+  const descriptionEn = (data.descriptionEn ?? "").trim();
+  const category = (data.category ?? existing.category).trim() || existing.category;
+
+  let slug = existing.slug;
+  const rawSlug = (data.slug ?? "").trim();
+  if (rawSlug) {
+    const next = slugifyGallery(rawSlug);
+    if (!isSafeGallerySlug(next)) throw new Error("슬러그는 영문·숫자·하이픈만 사용할 수 있습니다.");
+    if (next !== existing.slug) {
+      const clash = await prisma.galleryAlbum.findFirst({
+        where: { slug: next, NOT: { id } },
+        select: { id: true },
+      });
+      if (clash) throw new Error("이미 사용 중인 슬러그입니다.");
+      slug = next;
+    }
+  } else if (!isSafeGallerySlug(existing.slug)) {
+    slug = slugifyGallery(titleEn || title);
+  }
+
+  const album = await prisma.galleryAlbum.update({
+    where: { id },
+    data: { title, titleEn, slug, description, descriptionEn, category },
+  });
+
+  revalidateGallery(album.id, album.slug);
+  if (existing.slug !== album.slug) revalidateGallery(album.id, existing.slug);
+  return album;
+}
+
 export async function addGalleryPhoto(formData: FormData) {
   await requireAdmin(["SUPER_ADMIN", "CONTENT_ADMIN"]);
 
