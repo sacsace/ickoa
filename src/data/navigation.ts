@@ -34,9 +34,9 @@ export const mainNavigation: NavItem[] = [
     labelEn: "Gallery",
     children: [
       { id: "g-all", href: "/gallery", labelKo: "전체 갤러리", labelEn: "All Albums" },
-      { id: "g-life", href: "/gallery/chennai-life", labelKo: "첸나이 생활", labelEn: "Living in Chennai" },
-      { id: "g-ickoa", href: "/gallery/ickoa-events", labelKo: "한인회 행사", labelEn: "KAIC Events" },
-      { id: "g-clubs", href: "/gallery/clubs-sports", labelKo: "동호회 활동", labelEn: "Clubs & Sports" },
+      { id: "g-life", href: "/gallery?category=life", labelKo: "첸나이 생활", labelEn: "Living in Chennai" },
+      { id: "g-ickoa", href: "/gallery?category=ickoa", labelKo: "한인회 행사", labelEn: "KAIC Events" },
+      { id: "g-clubs", href: "/gallery?category=clubs", labelKo: "동호회 활동", labelEn: "Clubs & Sports" },
     ],
   },
   {
@@ -60,7 +60,7 @@ export const mainNavigation: NavItem[] = [
     labelEn: "Events",
     children: [
       { id: "e-calendar", href: "/events", labelKo: "이벤트 캘린더", labelEn: "Event Calendar" },
-      { id: "e-photos", href: "/gallery/ickoa-events", labelKo: "이벤트 사진", labelEn: "Event Photos" },
+      { id: "e-photos", href: "/gallery?category=ickoa", labelKo: "이벤트 사진", labelEn: "Event Photos" },
     ],
   },
   {

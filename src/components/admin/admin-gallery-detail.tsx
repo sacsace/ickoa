@@ -44,7 +44,7 @@ export function AdminGalleryDetail({
   const [metaError, setMetaError] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [photoCaption, setPhotoCaption] = useState("");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [deletePhotoTarget, setDeletePhotoTarget] = useState<{ id: string; caption: string } | null>(null);
   const [meta, setMeta] = useState({
@@ -90,15 +90,19 @@ export function AdminGalleryDetail({
 
   function handleAddPhoto() {
     setError(null);
+    if (photoFiles.length === 0) {
+      setError("이미지 파일을 선택해 주세요.");
+      return;
+    }
     const fd = new FormData();
     fd.set("albumId", album.id);
     fd.set("caption", photoCaption);
-    if (photoFile) fd.set("photo", photoFile);
+    for (const file of photoFiles) fd.append("photos", file);
     startTransition(async () => {
       try {
         await addGalleryPhoto(fd);
         setPhotoCaption("");
-        setPhotoFile(null);
+        setPhotoFiles([]);
         if (photoInputRef.current) photoInputRef.current.value = "";
         router.refresh();
       } catch (err) {
@@ -246,24 +250,42 @@ export function AdminGalleryDetail({
       </div>
       <div className="border border-border p-4">
         <h3 className="mb-3 text-sm font-medium">사진 추가</h3>
-        <div className="flex flex-wrap gap-2">
+        <p className="mb-2 text-xs text-muted-foreground">
+          여러 장을 한 번에 선택할 수 있습니다. 공통 설명은 선택사항입니다.
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
           <input
             value={photoCaption}
             onChange={(e) => setPhotoCaption(e.target.value)}
-            placeholder="사진 설명"
+            placeholder="공통 사진 설명 (선택)"
             className="h-9 min-w-[160px] flex-1 border border-border bg-background px-3 text-sm"
           />
           <input
             ref={photoInputRef}
             type="file"
             accept="image/*"
-            onChange={(e) => setPhotoFile(e.target.files?.[0] ?? null)}
+            multiple
+            onChange={(e) => setPhotoFiles(Array.from(e.target.files ?? []))}
             className="text-sm"
           />
-          <Button type="button" size="sm" disabled={isPending || !photoFile} onClick={handleAddPhoto}>
-            추가
+          <Button
+            type="button"
+            size="sm"
+            disabled={isPending || photoFiles.length === 0}
+            onClick={handleAddPhoto}
+          >
+            {isPending
+              ? "업로드 중..."
+              : photoFiles.length > 0
+                ? `${photoFiles.length}장 추가`
+                : "추가"}
           </Button>
         </div>
+        {photoFiles.length > 0 && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            선택됨: {photoFiles.map((f) => f.name).join(", ")}
+          </p>
+        )}
         {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       </div>
       <AdminConfirmDialog

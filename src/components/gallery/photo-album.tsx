@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useLocale } from "@/components/providers/locale-provider";
@@ -10,9 +11,11 @@ import { SectionHeader, FadeIn, SectionShell } from "@/components/ui/motion";
 import { galleryAlbums as defaultAlbums, type GalleryAlbum } from "@/data/gallery";
 import { cn } from "@/lib/utils";
 
+const GALLERY_CATEGORIES = ["life", "ickoa", "clubs"] as const;
+
 const categoryLabels = {
-  ko: { life: "Chennai", korea: "Korea", ickoa: "KAIC", clubs: "Clubs" },
-  en: { life: "Chennai", korea: "Korea", ickoa: "KAIC", clubs: "Clubs" },
+  ko: { life: "첸나이 생활", korea: "Korea", ickoa: "한인회 행사", clubs: "동호회 활동" },
+  en: { life: "Chennai Life", korea: "Korea", ickoa: "KAIC Events", clubs: "Clubs & Sports" },
 };
 
 const bentoSpans = [
@@ -182,16 +185,32 @@ export function PhotoAlbumSection({ albums = defaultAlbums }: { albums?: Gallery
 
 export function GalleryPageClient({ albums = defaultAlbums }: { albums?: GalleryAlbum[] }) {
   const { locale } = useLocale();
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const rawCategory = searchParams.get("category");
+  const activeCategory =
+    rawCategory && (GALLERY_CATEGORIES as readonly string[]).includes(rawCategory)
+      ? rawCategory
+      : null;
+
   const filtered = activeCategory
     ? albums.filter((a) => a.category === activeCategory)
     : albums;
-  const cats = ["life", "ickoa", "clubs"] as const;
+
+  function setActiveCategory(cat: string | null) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (cat) params.set("category", cat);
+    else params.delete("category");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 pb-16 md:px-8">
       <div className="mb-10 flex flex-wrap gap-x-1 gap-y-2 border-b border-border pb-4">
         <button
+          type="button"
           onClick={() => setActiveCategory(null)}
           className={cn(
             "px-3 py-1.5 text-sm transition-colors",
@@ -200,10 +219,11 @@ export function GalleryPageClient({ albums = defaultAlbums }: { albums?: Gallery
               : "text-muted-foreground hover:text-foreground",
           )}
         >
-          All
+          {locale === "ko" ? "전체" : "All"}
         </button>
-        {cats.map((cat) => (
+        {GALLERY_CATEGORIES.map((cat) => (
           <button
+            type="button"
             key={cat}
             onClick={() => setActiveCategory(cat)}
             className={cn(
@@ -223,6 +243,11 @@ export function GalleryPageClient({ albums = defaultAlbums }: { albums?: Gallery
             <AlbumTile album={album} locale={locale} span="" />
           </FadeIn>
         ))}
+        {filtered.length === 0 && (
+          <p className="col-span-full py-12 text-center text-sm text-muted-foreground">
+            {locale === "ko" ? "이 카테고리에 등록된 앨범이 없습니다." : "No albums in this category."}
+          </p>
+        )}
       </div>
     </div>
   );

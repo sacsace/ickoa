@@ -1448,48 +1448,75 @@ export async function addGalleryPhoto(formData: FormData) {
   const albumId = String(formData.get("albumId") ?? "");
   const caption = String(formData.get("caption") ?? "").trim();
   const photoUrl = String(formData.get("photoUrl") ?? "").trim();
-  const photoFile = formData.get("photo") as File | null;
 
-  let src = photoUrl;
-  if (photoFile && photoFile.size > 0) {
-    if (!IMAGE_TYPES.has(photoFile.type)) throw new Error("이미지 파일만 업로드할 수 있습니다.");
-    const { uploadGalleryFile } = await import("@/lib/s3");
-    src = await uploadGalleryFile(
-      Buffer.from(await photoFile.arrayBuffer()),
-      photoFile.name,
-      photoFile.type,
-    );
+  const files = [
+    ...formData.getAll("photos"),
+    ...formData.getAll("photo"),
+  ].filter((f): f is File => f instanceof File && f.size > 0);
+
+  if (files.length === 0 && !photoUrl) {
+    throw new Error("사진 파일 또는 URL을 입력해 주세요.");
   }
-  if (!src) throw new Error("사진 파일 또는 URL을 입력해 주세요.");
+  for (const file of files) {
+    if (!IMAGE_TYPES.has(file.type)) {
+      throw new Error(`이미지 파일만 업로드할 수 있습니다. (${file.name})`);
+    }
+  }
+
+  const { uploadGalleryFile } = await import("@/lib/s3");
+  const album = await prisma.galleryAlbum.findUnique({ where: { id: albumId } });
+  if (!album) throw new Error("앨범을 찾을 수 없습니다.");
 
   const maxOrder = await prisma.galleryPhoto.aggregate({
     where: { albumId },
     _max: { order: true },
   });
+  const beforeCount = await prisma.galleryPhoto.count({ where: { albumId } });
+  let nextOrder = (maxOrder._max.order ?? -1) + 1;
+  const createdSrcs: string[] = [];
 
-  const photo = await prisma.galleryPhoto.create({
-    data: {
-      albumId,
-      src,
-      caption,
-      order: (maxOrder._max.order ?? -1) + 1,
-    },
-  });
+  for (const file of files) {
+    const src = await uploadGalleryFile(
+      Buffer.from(await file.arrayBuffer()),
+      file.name,
+      file.type,
+    );
+    await prisma.galleryPhoto.create({
+      data: {
+        albumId,
+        src,
+        caption,
+        order: nextOrder++,
+      },
+    });
+    createdSrcs.push(src);
+  }
 
-  const album = await prisma.galleryAlbum.findUnique({
-    where: { id: albumId },
-    include: { photos: { select: { id: true } } },
-  });
-  // First photo (or missing cover) → use uploaded image as cover.
-  if (album && (!album.cover?.trim() || album.photos.length <= 1)) {
-    await prisma.galleryAlbum.update({ where: { id: albumId }, data: { cover: src } });
+  if (files.length === 0 && photoUrl) {
+    await prisma.galleryPhoto.create({
+      data: {
+        albumId,
+        src: photoUrl,
+        caption,
+        order: nextOrder++,
+      },
+    });
+    createdSrcs.push(photoUrl);
+  }
+
+  // First photos / missing cover → use first uploaded image as cover.
+  if (createdSrcs[0] && (beforeCount === 0 || !album.cover?.trim())) {
+    await prisma.galleryAlbum.update({
+      where: { id: albumId },
+      data: { cover: createdSrcs[0] },
+    });
   }
 
   const { ensureSafeGallerySlug } = await import("@/lib/gallery-data");
   const repaired = await ensureSafeGallerySlug(albumId);
 
-  revalidateGallery(albumId, repaired?.slug ?? album?.slug);
-  return photo;
+  revalidateGallery(albumId, repaired?.slug ?? album.slug);
+  return { count: createdSrcs.length };
 }
 
 export async function deleteGalleryAlbum(id: string) {

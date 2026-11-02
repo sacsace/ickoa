@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { PageHeader } from "@/components/ui/page-header";
 import { GalleryPageClient } from "@/components/gallery/photo-album";
 import { getGalleryAlbums } from "@/lib/gallery-data";
@@ -21,7 +22,9 @@ export default async function GalleryPage() {
         subtitle="첸나이 한인들의 모습, 한국을 대표하는 순간"
         backHref="/"
       />
-      <GalleryPageClient albums={albums} />
+      <Suspense fallback={<div className="mx-auto max-w-7xl px-4 pb-16 md:px-8" />}>
+        <GalleryPageClient albums={albums} />
+      </Suspense>
     </>
   );
 }
