@@ -1,14 +1,12 @@
 import Link from "next/link";
-import {
-  guideCategoryPathBySlug,
-  guideDisplayName,
-} from "@/data/guide";
+import { guideCategoryPath, guideDisplayName, guidePublicSlug } from "@/data/guide";
 import { cn } from "@/lib/utils";
 
 type CategoryNavItem = {
   id: string;
   slug: string;
   name: string;
+  nameEn?: string | null;
 };
 
 export function GuideTopicNav({
@@ -34,10 +32,10 @@ export function GuideTopicNav({
       {categories.map((item) => (
         <Link
           key={item.id}
-          href={guideCategoryPathBySlug(item.slug)}
+          href={guideCategoryPath(item)}
           className={cn(
             "rounded-lg px-3 py-2 text-xs font-medium transition-all",
-            activeSlug === item.slug
+            activeSlug === guidePublicSlug(item) || activeSlug === item.slug
               ? "bg-foreground text-background"
               : "bg-muted text-muted-foreground hover:text-foreground",
           )}

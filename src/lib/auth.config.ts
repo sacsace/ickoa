@@ -239,6 +239,23 @@ export const authConfig = {
     }),
   ],
   callbacks: {
+    async redirect({ url }) {
+      // AUTH_URL이 *.up.railway.app이면 로그아웃·로그인 후 그 도메인으로 이동해
+      // Railway "Not Found" 페이지가 뜬다. 상대 경로로 바꿔 현재 사이트에 남긴다.
+      try {
+        if (url.startsWith("/")) return url;
+        const next = new URL(url);
+        if (
+          next.hostname.endsWith(".up.railway.app") ||
+          next.hostname.endsWith(".railway.app")
+        ) {
+          return `${next.pathname}${next.search}${next.hash}` || "/";
+        }
+        return url;
+      } catch {
+        return "/";
+      }
+    },
     async jwt({ token, user, account, trigger, session }) {
       const t = token as Record<string, unknown>;
 

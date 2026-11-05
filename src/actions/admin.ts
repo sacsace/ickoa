@@ -6,7 +6,7 @@ import { auth } from "@/lib/auth";
 import { slugifyClub } from "@/lib/clubs";
 import { prisma } from "@/lib/prisma";
 import { resolveMapsUrlCoords } from "@/lib/google-maps-url";
-import { firstImageSrcFromHtml } from "@/lib/sanitize-html";
+import { firstImageSrcFromHtml, newsCoverImage } from "@/lib/sanitize-html";
 import { getAdminUser } from "@/lib/session-kind";
 import type { Role } from "@prisma/client";
 
@@ -44,7 +44,7 @@ export async function createNews(data: {
       content,
       category: data.category.trim() || "일반",
       region: data.region.trim() || "Chennai",
-      image: data.image?.trim() || null,
+      image: newsCoverImage({ image: data.image, content }) ?? null,
     },
   });
   revalidatePath("/news");
@@ -78,7 +78,7 @@ export async function updateNews(
       content,
       category: data.category.trim() || "일반",
       region: data.region.trim() || "Chennai",
-      image: data.image?.trim() || null,
+      image: newsCoverImage({ image: data.image, content }) ?? null,
     },
   });
   revalidatePath("/news");
@@ -315,10 +315,13 @@ export async function createGuide(data: {
 
 function slugifyGuideCategory(name: string) {
   return name
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9가-힣-_]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
     .slice(0, 60);
 }
 

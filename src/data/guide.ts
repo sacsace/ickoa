@@ -45,8 +45,49 @@ export function guideWriteLabel(name: string) {
   return name;
 }
 
+/** URL에 한글이 들어가면 카테고리 페이지가 404가 되므로 ASCII만 사용 */
+export function isSafeGuideSlug(slug: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug);
+}
+
+export function slugifyGuide(input: string) {
+  const ascii = input
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60);
+  return ascii;
+}
+
+export function guidePublicSlug(category: {
+  id: string;
+  slug: string;
+  name: string;
+  nameEn?: string | null;
+}) {
+  if (isSafeGuideSlug(category.slug)) return category.slug;
+  return (
+    slugifyGuide(category.nameEn || "") ||
+    slugifyGuide(category.name) ||
+    category.id
+  );
+}
+
 export function guideCategoryPathBySlug(slug: string) {
   return `/guide/c/${slug}`;
+}
+
+export function guideCategoryPath(category: {
+  id: string;
+  slug: string;
+  name: string;
+  nameEn?: string | null;
+}) {
+  return guideCategoryPathBySlug(guidePublicSlug(category));
 }
 
 export function guideCategoryNewPathBySlug(slug: string) {
@@ -65,7 +106,7 @@ export function guideListPath(category: string, slug?: string | null) {
   return "/guide";
 }
 
-export function guideCategoryPath(category: string) {
+export function guideCategoryPathFromName(category: string) {
   return guideListPath(category);
 }
 

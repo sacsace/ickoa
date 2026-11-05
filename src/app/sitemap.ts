@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/seo";
+import { guidePublicSlug } from "@/data/guide";
 import { mainNavigation } from "@/data/navigation";
 
 export const dynamic = "force-dynamic";
@@ -96,7 +97,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   for (const item of guideCategories) {
     entries.push({
-      url: absoluteUrl(`/guide/c/${item.slug}`),
+      url: absoluteUrl(`/guide/c/${guidePublicSlug(item)}`),
       lastModified: item.updatedAt,
       changeFrequency: "weekly",
       priority: 0.65,

@@ -1,23 +1,27 @@
 import { prisma } from "@/lib/prisma";
+import { guidePublicSlug } from "@/data/guide";
+import { newsCoverImage } from "@/lib/sanitize-html";
 
 export async function getNews(limit?: number) {
-  return prisma.news.findMany({
+  const rows = await prisma.news.findMany({
     where: { published: true },
     orderBy: { createdAt: "desc" },
-    ...(limit
-      ? {
-          take: limit,
-          select: {
-            id: true,
-            title: true,
-            category: true,
-            region: true,
-            image: true,
-            createdAt: true,
-          },
-        }
-      : {}),
+    ...(limit ? { take: limit } : {}),
+    select: {
+      id: true,
+      title: true,
+      category: true,
+      region: true,
+      image: true,
+      content: true,
+      createdAt: true,
+    },
   });
+
+  return rows.map(({ content, image, ...rest }) => ({
+    ...rest,
+    image: newsCoverImage({ image, content }),
+  }));
 }
 
 export async function getBusinesses(filters?: {
@@ -124,7 +128,25 @@ export async function getGuideCategories() {
 }
 
 export async function getGuideCategoryBySlug(slug: string) {
-  return prisma.guideCategory.findUnique({ where: { slug } });
+  let decoded = slug;
+  try {
+    decoded = decodeURIComponent(slug);
+  } catch {
+    /* keep raw */
+  }
+  const variants = Array.from(
+    new Set([slug, decoded, decoded.normalize("NFC"), decoded.normalize("NFD")]),
+  );
+  const direct = await prisma.guideCategory.findFirst({
+    where: { OR: variants.map((value) => ({ slug: value })) },
+  });
+  if (direct) return direct;
+
+  const categories = await prisma.guideCategory.findMany();
+  return (
+    categories.find((category) => variants.includes(guidePublicSlug(category))) ??
+    null
+  );
 }
 
 export async function getPostsByBoard(slug: string) {

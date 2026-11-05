@@ -6,6 +6,7 @@ import { getGuideCategoryBySlug } from "@/lib/data";
 import { createMetadata } from "@/lib/seo";
 import {
   guideCategoryPathBySlug,
+  guidePublicSlug,
   guideWriteLabel,
 } from "@/data/guide";
 
@@ -48,14 +49,14 @@ export default async function NewGuideItemPage({
     <>
       <PageHeader
         title={`${writeLabel} 등록`}
-        backHref={guideCategoryPathBySlug(category.slug)}
+        backHref={guideCategoryPathBySlug(guidePublicSlug(category))}
       />
       <div
         className={`mx-auto px-4 py-8 md:px-6 lg:px-8 ${
           category.slug === "interpreter" ? "max-w-3xl" : "max-w-7xl"
         }`}
       >
-        <GuideForm category={category.name} categorySlug={category.slug} />
+        <GuideForm category={category.name} categorySlug={guidePublicSlug(category)} />
       </div>
     </>
   );

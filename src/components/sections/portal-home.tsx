@@ -22,7 +22,7 @@ import { MagazinePdfCoverLazy } from "@/components/magazine/magazine-pdf-cover-l
 import type { HeroSlideData } from "@/data/hero";
 import type { GalleryAlbum } from "@/data/gallery";
 import type { MagazineIssue } from "@/data/dynamic-korean";
-import { guideDisplayName } from "@/data/guide";
+import { guideCategoryPath, guideDisplayName } from "@/data/guide";
 
 type NewsItem = {
   id: string;
@@ -61,6 +61,7 @@ type Club = {
 type GuideCategory = {
   id: string;
   name: string;
+  nameEn?: string | null;
   slug: string;
   itemCount: number;
 };
@@ -383,7 +384,7 @@ export function PortalHome({
               {guideCategories.slice(0, 8).map((category) => (
                 <li key={category.id}>
                   <Link
-                    href={`/guide/c/${category.slug}`}
+                    href={guideCategoryPath(category)}
                     className="portal-list-item"
                   >
                     <span className="line-clamp-1 flex-1 text-[13px] font-medium">

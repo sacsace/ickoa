@@ -1,8 +1,5 @@
 import Link from "next/link";
-import {
-  guideCategoryPathBySlug,
-  guideDisplayName,
-} from "@/data/guide";
+import { guideCategoryPath, guideDisplayName } from "@/data/guide";
 
 type CategoryItem = {
   id: string;
@@ -26,7 +23,7 @@ export function GuideCategoryGrid({ categories }: { categories: CategoryItem[] }
       {categories.map((category) => (
         <Link
           key={category.id}
-          href={guideCategoryPathBySlug(category.slug)}
+          href={guideCategoryPath(category)}
           className="hover-lift rounded-2xl border border-border bg-card p-6 md:rounded-3xl"
         >
           <p className="text-xs text-muted-foreground">카테고리</p>

@@ -170,3 +170,13 @@ export function eventCoverImage(event: {
   if (direct) return direct;
   return firstImageSrcFromHtml(event.description);
 }
+
+/** 첨부 썸네일이 없으면 본문 첫 이미지를 카드 썸네일로 사용 */
+export function newsCoverImage(news: {
+  image?: string | null;
+  content?: string | null;
+}) {
+  const direct = news.image?.trim();
+  if (direct) return direct;
+  return firstImageSrcFromHtml(news.content);
+}

@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PageHeader } from "@/components/ui/page-header";
 import { GuideItemsList } from "@/components/guide/guide-items-list";
 import { GuideTopicNav } from "@/components/guide/guide-topic-nav";
@@ -14,6 +14,7 @@ import { createMetadata } from "@/lib/seo";
 import {
   guideCategoryNewPathBySlug,
   guideDisplayName,
+  guidePublicSlug,
   guideWriteLabel,
 } from "@/data/guide";
 
@@ -50,6 +51,17 @@ export default async function GuideCategoryItemsPage({
   ]);
   if (!category) notFound();
 
+  const canonical = guidePublicSlug(category);
+  let requested = slug;
+  try {
+    requested = decodeURIComponent(slug);
+  } catch {
+    /* keep raw */
+  }
+  if (requested !== canonical) {
+    redirect(`/guide/c/${canonical}`);
+  }
+
   const guides = await getGuides(category.name);
   const title = guideDisplayName(category.name);
   const writeLabel = guideWriteLabel(category.name);
@@ -63,12 +75,12 @@ export default async function GuideCategoryItemsPage({
         backHref="/guide"
       />
       <div className="mx-auto w-full max-w-[1356px] px-4 py-12 md:px-6 lg:px-8">
-        <GuideTopicNav categories={categories} activeSlug={category.slug} />
+        <GuideTopicNav categories={categories} activeSlug={canonical} />
         <GuideItemsList
           guides={guides}
           currentUserId={siteUser?.id}
           manageAll={isSiteSuperuser(siteUser)}
-          writeHref={guideCategoryNewPathBySlug(category.slug)}
+          writeHref={guideCategoryNewPathBySlug(canonical)}
           writeLabel={writeLabel}
           interpreterCategory={category.slug === "interpreter"}
         />
