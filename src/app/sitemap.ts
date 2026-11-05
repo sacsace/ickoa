@@ -41,7 +41,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       prisma.news.findMany({ select: { id: true, updatedAt: true } }),
       prisma.event.findMany({ select: { id: true, updatedAt: true } }),
       prisma.guide.findMany({ select: { id: true, updatedAt: true } }),
-      prisma.guideCategory.findMany({ select: { slug: true, updatedAt: true } }),
+      prisma.guideCategory.findMany({
+        select: { id: true, name: true, nameEn: true, slug: true, updatedAt: true },
+      }),
       prisma.magazineIssue.findMany({
         where: { published: true },
         select: { slug: true, updatedAt: true },
